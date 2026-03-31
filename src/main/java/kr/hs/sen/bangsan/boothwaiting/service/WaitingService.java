@@ -15,7 +15,10 @@ public class WaitingService {
         if (waitingRepository.existsByStudentID(waitingResisterRequest.getStudentID())) {
             throw new IllegalStateException("이미 대기 등록된 학번입니다.");
         }
-
         return waitingRepository.save(waitingResisterRequest.toEntity()).getId();
+    }
+
+    public int checkWaiting(int studentID) {
+        return (int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentID(studentID).getId()).count();
     }
 }
