@@ -9,12 +9,11 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class Waiting {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(nullable = false, unique = true)
     private int studentID;
@@ -24,4 +23,10 @@ public class Waiting {
 
     @Column(nullable = false)
     private String phoneNumber;
+
+    public Waiting(int studentID, String name, String phoneNumber) {
+        this.studentID = studentID;
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+    }
 }
