@@ -18,10 +18,14 @@ import java.util.concurrent.ScheduledFuture;
 @Service
 public class WaitingUpdateService {
 
+    @Autowired
     private WaitingRepository waitingRepository;
+    @Autowired
     private AccountRepository accountRepository;
     @Autowired
     private TaskScheduler taskScheduler;
+
+    final WaitingUpdateService waitingUpdateService = this;
 
     private final Map<Integer, ScheduledFuture<?>> waitingCancelTimers = new HashMap<>();
 
@@ -41,8 +45,15 @@ public class WaitingUpdateService {
                 account = new Account(waiting.getStudentID(), waiting.getName());
                 accountRepository.save(account);
             }
-            //입장된 사람 취소 타이머 시작
-            taskScheduler.schedule(() -> {
+            final int studentID = account.getStudentID();
+            ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> {
+                Account currentAccount = accountRepository.findByStudentID(studentID);
+                if (currentAccount != null && currentAccount.getStatus() == Account.AccountStatus.WAITING) {
+                    currentAccount.cancelEntry();
+                    waitingUpdateService.updateWaiting();
+                    waitingCancelTimers.remove(studentID);
+                    // TODO: Send message: "Entry expired due to no-show."
+                }
 
             }, account.getEnterTime().atZone(ZoneId.systemDefault()).plusMinutes(3).toInstant());
             //입장 취소 타이머 취소시키

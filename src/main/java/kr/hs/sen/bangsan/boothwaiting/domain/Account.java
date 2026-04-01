@@ -48,6 +48,22 @@ public class Account {
         this.enterTime = LocalDateTime.now();
     }
 
+    public void cancelEntry() {
+        this.status = AccountStatus.CANCELED;
+    }
+
+    public void exit() {
+        this.status = AccountStatus.EXITED;
+    }
+
+    public void reregister() {
+        this.status = AccountStatus.WAITING;
+    }
+
+    public void temporarilyExit() {
+        this.status = AccountStatus.TEMPORARILY_EXIT;
+    }
+
     public enum AccountStatus {
         WAITING,
         ENTERED,
