@@ -19,6 +19,10 @@ public class WaitingService {
     }
 
     public int checkWaiting(int studentID) {
-        return (int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentID(studentID).getId()).count();
+        if(waitingRepository.existsByStudentID(studentID)) {
+            return (int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentID(studentID).getId()).count();
+        } else {
+            return -1;
+        }
     }
 }

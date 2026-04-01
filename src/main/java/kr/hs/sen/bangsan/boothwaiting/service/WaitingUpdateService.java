@@ -4,15 +4,26 @@ import kr.hs.sen.bangsan.boothwaiting.domain.Account;
 import kr.hs.sen.bangsan.boothwaiting.domain.Waiting;
 import kr.hs.sen.bangsan.boothwaiting.repository.AccountRepository;
 import kr.hs.sen.bangsan.boothwaiting.repository.WaitingRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 @Service
 public class WaitingUpdateService {
 
     private WaitingRepository waitingRepository;
     private AccountRepository accountRepository;
+    @Autowired
+    private TaskScheduler taskScheduler;
+
+    private final Map<Integer, ScheduledFuture<?>> waitingCancelTimers = new HashMap<>();
 
     public void updateWaiting() {
         int currentNumber = accountRepository.findAllByStatus(Account.AccountStatus.ENTERED).size() + accountRepository.findAllByStatus(Account.AccountStatus.WAITING).size() + accountRepository.findAllByStatus(Account.AccountStatus.TEMPORARILY_EXIT).size();
@@ -30,7 +41,11 @@ public class WaitingUpdateService {
                 account = new Account(waiting.getStudentID(), waiting.getName());
                 accountRepository.save(account);
             }
-            //입장 취소 타이머 취소시키기
+            //입장된 사람 취소 타이머 시작
+            taskScheduler.schedule(() -> {
+
+            }, account.getEnterTime().atZone(ZoneId.systemDefault()).plusMinutes(3).toInstant());
+            //입장 취소 타이머 취소시키
             //입장된 사람한테 메세지 발송
             //순번 n번 남은 사람에게 메세지 발송
         }
