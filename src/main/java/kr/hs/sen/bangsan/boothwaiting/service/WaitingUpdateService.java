@@ -27,7 +27,7 @@ public class WaitingUpdateService {
 
     final WaitingUpdateService waitingUpdateService = this;
 
-    private final Map<Integer, ScheduledFuture<?>> waitingCancelTimers = new HashMap<>();
+    protected static final Map<Integer, ScheduledFuture<?>> waitingCancelTimers = new HashMap<>();
 
     public void updateWaiting() {
         int currentNumber = accountRepository.findAllByStatus(Account.AccountStatus.ENTERED).size() + accountRepository.findAllByStatus(Account.AccountStatus.WAITING).size() + accountRepository.findAllByStatus(Account.AccountStatus.TEMPORARILY_EXIT).size();
@@ -40,7 +40,6 @@ public class WaitingUpdateService {
             } else {break;}
             if(accountRepository.existsByStudentID(waiting.getStudentID())) {
                 account = accountRepository.findByStudentID(waiting.getStudentID());
-                account.completeEntry();
             } else {
                 account = new Account(waiting.getStudentID(), waiting.getName());
                 accountRepository.save(account);
@@ -52,11 +51,10 @@ public class WaitingUpdateService {
                     currentAccount.cancelEntry();
                     waitingUpdateService.updateWaiting();
                     waitingCancelTimers.remove(studentID);
-                    // TODO: Send message: "Entry expired due to no-show."
+                    // TODO: 입장 취소 메세지 전송
                 }
 
             }, account.getEnterTime().atZone(ZoneId.systemDefault()).plusMinutes(3).toInstant());
-            //입장 취소 타이머 취소시키
             //입장된 사람한테 메세지 발송
             //순번 n번 남은 사람에게 메세지 발송
         }

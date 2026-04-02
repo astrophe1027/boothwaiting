@@ -1,7 +1,9 @@
 package kr.hs.sen.bangsan.boothwaiting.service;
 
 import jakarta.transaction.Transactional;
+import kr.hs.sen.bangsan.boothwaiting.domain.Account;
 import kr.hs.sen.bangsan.boothwaiting.dto.WaitingResisterRequest;
+import kr.hs.sen.bangsan.boothwaiting.repository.AccountRepository;
 import kr.hs.sen.bangsan.boothwaiting.repository.WaitingRepository;
 import org.springframework.stereotype.Service;
 
@@ -9,11 +11,16 @@ import org.springframework.stereotype.Service;
 public class WaitingService {
 
     private WaitingRepository waitingRepository;
+    private AccountRepository accountRepository;
 
     @Transactional
     public int registerWaiting(WaitingResisterRequest waitingResisterRequest) {
+        Account account = accountRepository.findByStudentID(waitingResisterRequest.getStudentID());
+        if (account != null && (account.getStatus() == Account.AccountStatus.WAITING || account.getStatus() == Account.AccountStatus.ENTERED || account.getStatus() == Account.AccountStatus.TEMPORARILY_EXIT)) {
+            throw new IllegalArgumentException("이미 호출 혹은 입장된 학번입니다.");
+        }
         if (waitingRepository.existsByStudentID(waitingResisterRequest.getStudentID())) {
-            throw new IllegalStateException("이미 대기 등록된 학번입니다.");
+            throw new IllegalArgumentException("이미 대기 등록된 학번입니다.");
         }
         return waitingRepository.save(waitingResisterRequest.toEntity()).getId();
     }
@@ -24,5 +31,20 @@ public class WaitingService {
         } else {
             return -1;
         }
+    }
+
+    public String EnterWaiting(int studentID) {
+        if(accountRepository.existsByStudentID(studentID) && !waitingRepository.existsByStudentID(studentID)) {
+            Account account = accountRepository.findByStudentID(studentID);
+            if(account.getStatus() == Account.AccountStatus.WAITING) {
+                account.completeEntry();
+                return "입장되었습니다.";
+            } else if (account.getStatus() == Account.AccountStatus.CANCELED) {
+                return "부재로 인해 이미 입장 취소되었습니다.";
+            } else if (account.getStatus() == Account.AccountStatus.ENTERED) {
+                return "이미 입장되어 있습니다.";
+            }
+        }
+        return "등록되지 않았습니다";
     }
 }
