@@ -2,6 +2,7 @@ package kr.hs.sen.bangsan.boothwaiting.service;
 
 import jakarta.transaction.Transactional;
 import kr.hs.sen.bangsan.boothwaiting.domain.Account;
+import kr.hs.sen.bangsan.boothwaiting.dto.WaitingRegisterResponse;
 import kr.hs.sen.bangsan.boothwaiting.dto.WaitingResisterRequest;
 import kr.hs.sen.bangsan.boothwaiting.repository.AccountRepository;
 import kr.hs.sen.bangsan.boothwaiting.repository.WaitingRepository;
@@ -14,17 +15,18 @@ public class WaitingService {
     private AccountRepository accountRepository;
 
     @Transactional
-    public int registerWaiting(WaitingResisterRequest waitingResisterRequest) {
+    public WaitingRegisterResponse registerWaiting(WaitingResisterRequest waitingResisterRequest) {
         Account account = accountRepository.findByStudentID(waitingResisterRequest.getStudentID());
         if (account != null && (account.getStatus() == Account.AccountStatus.WAITING || account.getStatus() == Account.AccountStatus.ENTERED || account.getStatus() == Account.AccountStatus.TEMPORARILY_EXIT)) {
-            throw new IllegalArgumentException("이미 호출 혹은 입장된 학번입니다.");
+            return new WaitingRegisterResponse(-1, "이미 호출 혹은 입장된 학번입니다.");
         }
         if (waitingRepository.existsByStudentID(waitingResisterRequest.getStudentID())) {
-            throw new IllegalArgumentException("이미 대기 등록된 학번입니다.");
+            return new WaitingRegisterResponse(-1, "이미 등록된 학번입니다.");
         }
-        return waitingRepository.save(waitingResisterRequest.toEntity()).getId();
+        return new WaitingRegisterResponse(waitingRepository.save(waitingResisterRequest.toEntity()).getId(), "등록되었습니다.");
     }
 
+    //*학번으로 받은 학생 앞에 대기중인 학생수(대기열에 없을 경우 -1)
     public int checkWaiting(int studentID) {
         if(waitingRepository.existsByStudentID(studentID)) {
             return (int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentID(studentID).getId()).count();
