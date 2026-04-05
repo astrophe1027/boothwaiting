@@ -9,7 +9,6 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +29,7 @@ public class WaitingUpdateService {
     protected static final Map<Integer, ScheduledFuture<?>> waitingCancelTimers = new HashMap<>();
 
     public void updateWaiting() {
-        int currentNumber = accountRepository.findAllByStatus(Account.AccountStatus.ENTERED).size() + accountRepository.findAllByStatus(Account.AccountStatus.WAITING).size() + accountRepository.findAllByStatus(Account.AccountStatus.TEMPORARILY_EXIT).size();
+        int currentNumber = accountRepository.findAllByStatus(Account.AccountStatus.ENTERED).size() + accountRepository.findAllByStatus(Account.AccountStatus.CALLED).size() + accountRepository.findAllByStatus(Account.AccountStatus.TEMPORARILY_EXIT).size();
         int maxNumber = 20;
         for (int i = 0; i < maxNumber - currentNumber; i++) {
             Waiting waiting;
@@ -47,7 +46,7 @@ public class WaitingUpdateService {
             final int studentID = account.getStudentID();
             ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> {
                 Account currentAccount = accountRepository.findByStudentID(studentID);
-                if (currentAccount != null && currentAccount.getStatus() == Account.AccountStatus.WAITING) {
+                if (currentAccount != null && currentAccount.getStatus() == Account.AccountStatus.CALLED) {
                     currentAccount.cancelEntry();
                     waitingUpdateService.updateWaiting();
                     waitingCancelTimers.remove(studentID);
@@ -55,8 +54,8 @@ public class WaitingUpdateService {
                 }
 
             }, account.getEnterTime().atZone(ZoneId.systemDefault()).plusMinutes(3).toInstant());
-            //입장된 사람한테 메세지 발송
-            //순번 n번 남은 사람에게 메세지 발송
+            // TODO: 입장된 사람한테 메세지 발송
+            // TODO: 순번 n번 남은 사람에게 메세지 발송
         }
     }
 }

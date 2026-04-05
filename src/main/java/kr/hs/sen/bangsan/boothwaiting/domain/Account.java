@@ -40,7 +40,7 @@ public class Account {
         this.studentID = studentID;
         this.name = name;
         this.token = 0;
-        this.status = AccountStatus.WAITING;
+        this.status = AccountStatus.CALLED;
     }
 
     public void completeEntry() {
@@ -57,7 +57,7 @@ public class Account {
     }
 
     public void reregister() {
-        this.status = AccountStatus.WAITING;
+        this.status = AccountStatus.CALLED;
     }
 
     public void temporarilyExit() {
@@ -65,7 +65,7 @@ public class Account {
     }
 
     public enum AccountStatus {
-        WAITING,
+        CALLED,
         ENTERED,
         EXITED,
         TEMPORARILY_EXIT,

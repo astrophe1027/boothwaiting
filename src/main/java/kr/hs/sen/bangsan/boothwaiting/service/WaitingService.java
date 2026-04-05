@@ -2,22 +2,26 @@ package kr.hs.sen.bangsan.boothwaiting.service;
 
 import jakarta.transaction.Transactional;
 import kr.hs.sen.bangsan.boothwaiting.domain.Account;
+import kr.hs.sen.bangsan.boothwaiting.dto.WaitingCheckResponse;
 import kr.hs.sen.bangsan.boothwaiting.dto.WaitingRegisterResponse;
 import kr.hs.sen.bangsan.boothwaiting.dto.WaitingResisterRequest;
 import kr.hs.sen.bangsan.boothwaiting.repository.AccountRepository;
 import kr.hs.sen.bangsan.boothwaiting.repository.WaitingRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class WaitingService {
 
+    @Autowired
     private WaitingRepository waitingRepository;
+    @Autowired
     private AccountRepository accountRepository;
 
     @Transactional
     public WaitingRegisterResponse registerWaiting(WaitingResisterRequest waitingResisterRequest) {
         Account account = accountRepository.findByStudentID(waitingResisterRequest.getStudentID());
-        if (account != null && (account.getStatus() == Account.AccountStatus.WAITING || account.getStatus() == Account.AccountStatus.ENTERED || account.getStatus() == Account.AccountStatus.TEMPORARILY_EXIT)) {
+        if (account != null && (account.getStatus() == Account.AccountStatus.CALLED || account.getStatus() == Account.AccountStatus.ENTERED || account.getStatus() == Account.AccountStatus.TEMPORARILY_EXIT)) {
             return new WaitingRegisterResponse(-1, "이미 호출 혹은 입장된 학번입니다.");
         }
         if (waitingRepository.existsByStudentID(waitingResisterRequest.getStudentID())) {
@@ -27,18 +31,18 @@ public class WaitingService {
     }
 
     //*학번으로 받은 학생 앞에 대기중인 학생수(대기열에 없을 경우 -1)
-    public int checkWaiting(int studentID) {
+    public WaitingCheckResponse checkWaiting(int studentID) {
         if(waitingRepository.existsByStudentID(studentID)) {
-            return (int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentID(studentID).getId()).count();
+            return new WaitingCheckResponse((int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentID(studentID).getId()).count(), "앞에서 대기중인 팀의 수를 정상적으로 불러왔습니다.");
         } else {
-            return -1;
+            return new WaitingCheckResponse(-1, "등록되지 않은 학번입니다.");
         }
     }
 
     public String EnterWaiting(int studentID) {
         if(accountRepository.existsByStudentID(studentID) && !waitingRepository.existsByStudentID(studentID)) {
             Account account = accountRepository.findByStudentID(studentID);
-            if(account.getStatus() == Account.AccountStatus.WAITING) {
+            if(account.getStatus() == Account.AccountStatus.CALLED) {
                 account.completeEntry();
                 return "입장되었습니다.";
             } else if (account.getStatus() == Account.AccountStatus.CANCELED) {
