@@ -2,7 +2,6 @@ package kr.hs.sen.bangsan.boothwaiting.domain;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -16,7 +15,7 @@ public class Waiting {
     private Integer id;
 
     @Column(nullable = false, unique = true)
-    private int studentID;
+    private int studentId;
 
     @Column(nullable = false)
     private String name;
@@ -25,7 +24,7 @@ public class Waiting {
     private String phoneNumber;
 
     public Waiting(int studentID, String name, String phoneNumber) {
-        this.studentID = studentID;
+        this.studentId = studentID;
         this.name = name;
         this.phoneNumber = phoneNumber;
     }

@@ -4,7 +4,7 @@ import kr.hs.sen.bangsan.boothwaiting.domain.Waiting;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WaitingRepository extends JpaRepository<Waiting, Integer> {
-    boolean existsByStudentID(int studentID);
+    boolean existsByStudentId(int studentId);
 
-    Waiting findByStudentID(int studentID);
+    Waiting findByStudentId(int studentId);
 }

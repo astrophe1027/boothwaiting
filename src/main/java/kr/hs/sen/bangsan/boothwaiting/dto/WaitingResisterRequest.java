@@ -8,13 +8,13 @@ import lombok.Getter;
 @AllArgsConstructor
 public class WaitingResisterRequest {
 
-    private int studentID;
+    private int studentId;
 
     private String name;
 
     private String phoneNumber;
 
     public Waiting toEntity() {
-        return new Waiting(this.studentID, this.name, this.phoneNumber);
+        return new Waiting(this.studentId, this.name, this.phoneNumber);
     }
 }

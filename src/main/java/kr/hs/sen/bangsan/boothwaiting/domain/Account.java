@@ -20,7 +20,7 @@ public class Account {
     private Integer id;
 
     @Column(nullable = false, unique = true)
-    private Integer studentID;
+    private Integer studentId;
 
     @Column(nullable = false)
     private String name;
@@ -37,7 +37,7 @@ public class Account {
     private AccountStatus status;
 
     public Account(Integer studentID, String name) {
-        this.studentID = studentID;
+        this.studentId = studentID;
         this.name = name;
         this.token = 0;
         this.status = AccountStatus.CALLED;
