@@ -30,7 +30,7 @@ public class Account {
 
     @Column(nullable = false)
     @CreatedDate
-    private LocalDateTime enterTime;
+    private LocalDateTime time;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -45,19 +45,22 @@ public class Account {
 
     public void completeEntry() {
         this.status = AccountStatus.ENTERED;
-        this.enterTime = LocalDateTime.now();
+        this.time = LocalDateTime.now();
     }
 
     public void cancelEntry() {
         this.status = AccountStatus.CANCELED;
+        this.time = LocalDateTime.now();
     }
 
     public void exit() {
         this.status = AccountStatus.EXITED;
+        this.time = LocalDateTime.now();
     }
 
-    public void reregister() {
+    public void recall() {
         this.status = AccountStatus.CALLED;
+        this.time = LocalDateTime.now();
     }
 
     public void temporarilyExit() {

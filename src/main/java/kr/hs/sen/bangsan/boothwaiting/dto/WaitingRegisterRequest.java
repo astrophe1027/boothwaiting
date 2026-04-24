@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class WaitingResisterRequest {
+public class WaitingRegisterRequest {
 
     private int studentId;
 
