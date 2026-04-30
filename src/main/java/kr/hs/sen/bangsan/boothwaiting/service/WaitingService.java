@@ -42,7 +42,7 @@ public class WaitingService {
         return new WaitingRegisterResponse(waiting.getId(), "등록되었습니다.");
     }
 
-    //*학번으로 받은 학생 앞에 대기중인 학생수(대기열에 없을 경우 -1)
+    //학번으로 받은 학생 앞에 대기중인 학생 수
     public WaitingCheckResponse checkWaiting(int studentID) {
         if(waitingRepository.existsByStudentId(studentID)) {
             return new WaitingCheckResponse((int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentId(studentID).getId()).count(), "대기 팀의 수를 정상적으로 불러왔습니다.");
@@ -55,14 +55,18 @@ public class WaitingService {
     public String enterWaiting(int studentId) {
         if(accountRepository.existsByStudentId(studentId) && !waitingRepository.existsByStudentId(studentId)) {
             Account account = accountRepository.findByStudentId(studentId);
-            if(account.getStatus() == Account.AccountStatus.CALLED) {
+             if (account.getStatus() == Account.AccountStatus.CANCELED) {
+                return "부재로 인해 이미 입장 취소되었습니다.";
+            } else if (account.getStatus() == Account.AccountStatus.ENTERED) {
+                return "이미 입장되어 있습니다.";
+            } else if(account.getStatus() == Account.AccountStatus.CALLED) {
+                 // 입장 로직
                 account.completeEntry();
 
                 try {
-                    // 1. 학번과 그룹명을 이용해 JobKey 생성
                     JobKey jobKey = JobKey.jobKey(Objects.toString(studentId), "cancel-group");
 
-                    // 2. 해당 JobKey가 스케줄러에 존재하는지 확인 후 삭제
+                    // 스케줄러 삭제
                     if (scheduler.checkExists(jobKey)) {
                         scheduler.deleteJob(jobKey);
                     }
@@ -73,10 +77,6 @@ public class WaitingService {
 
                 // TODO:이용제한 시간 타이머 만들기
                 return "입장되었습니다.";
-            } else if (account.getStatus() == Account.AccountStatus.CANCELED) {
-                return "부재로 인해 이미 입장 취소되었습니다.";
-            } else if (account.getStatus() == Account.AccountStatus.ENTERED) {
-                return "이미 입장되어 있습니다.";
             }
         }
         return "등록되지 않았습니다";
