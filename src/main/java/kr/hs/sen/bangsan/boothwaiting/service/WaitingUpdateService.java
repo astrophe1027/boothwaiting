@@ -66,10 +66,12 @@ public class WaitingUpdateService {
                     .build();
 
             // 트리거
-            // 3분뒤 실행
+            // x분뒤 실행
+            int x = 3;
             Date runTime = Date.from(account.getTime()
                     .atZone(ZoneId.systemDefault())
-                    .plusMinutes(1)
+                    //취소 유예시간
+                    .plusMinutes(x)
                     .toInstant());
             Trigger trigger = TriggerBuilder.newTrigger()
                     .withIdentity(studentId + "-trigger", "cancel-group")

@@ -44,44 +44,41 @@
         <header>
             <h2 style="margin-bottom: 0;">📋 대기열 등록</h2>
         </header>
+        <div id="response-message">
+            <form hx-post="/api/waiting" hx-target="#response-message" hx-swap="innerHTML">
 
-        <form hx-post="/api/waiting" hx-target="#response-message" hx-swap="innerHTML">
+                <label for="name">이름
+                    <input type="text" id="name" name="name" placeholder="이름을 입력하세요" required>
+                </label>
 
-            <label for="name">이름
-                <input type="text" id="name" name="name" placeholder="이름을 입력하세요" required>
-            </label>
+                <label for="studentId">학번 (5자리)
+                    <input type="text"
+                           id="studentId"
+                           name="studentId"
+                           placeholder="12345"
+                           pattern="\d{5}"
+                           maxlength="5"
+                           inputmode="numeric"
+                           title="숫자 5자리를 입력해주세요"
+                           required>
+                </label>
 
-            <label for="studentId">학번 (5자리)
-                <input type="text"
-                       id="studentId"
-                       name="studentId"
-                       placeholder="12345"
-                       pattern="\d{5}"
-                       maxlength="5"
-                       inputmode="numeric"
-                       title="숫자 5자리를 입력해주세요"
-                       required>
-            </label>
+                <label for="phoneNumber">전화번호
+                    <input type="tel"
+                           id="phoneNumber"
+                           name="phoneNumber"
+                           placeholder="010-0000-0000"
+                           inputmode="tel"
+                           autocomplete="tel"
+                           maxlength="13"
+                           oninput="autoHyphen(this)"
+                           onchange="autoHyphen(this)"
+                           required>
+                </label>
 
-            <label for="phoneNumber">전화번호
-                <input type="tel"
-                       id="phoneNumber"
-                       name="phoneNumber"
-                       placeholder="010-0000-0000"
-                       inputmode="tel"
-                       autocomplete="tel"
-                       maxlength="13"
-                       oninput="autoHyphen(this)"
-                       onchange="autoHyphen(this)"
-                       required>
-            </label>
-
-            <button type="submit">등록하기</button>
-        </form>
-
-        <footer id="response-message">
-
-        </footer>
+                <button type="submit">등록하기</button>
+            </form>
+        </div>
     </article>
 </main>
 

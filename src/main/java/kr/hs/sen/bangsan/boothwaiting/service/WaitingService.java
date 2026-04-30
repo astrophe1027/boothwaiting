@@ -45,7 +45,7 @@ public class WaitingService {
     //*학번으로 받은 학생 앞에 대기중인 학생수(대기열에 없을 경우 -1)
     public WaitingCheckResponse checkWaiting(int studentID) {
         if(waitingRepository.existsByStudentId(studentID)) {
-            return new WaitingCheckResponse((int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentId(studentID).getId()).count(), "앞에서 대기중인 팀의 수를 정상적으로 불러왔습니다.");
+            return new WaitingCheckResponse((int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentId(studentID).getId()).count(), "대기 팀의 수를 정상적으로 불러왔습니다.");
         } else {
             return new WaitingCheckResponse(-1, "등록되지 않은 학번입니다.");
         }
@@ -80,5 +80,13 @@ public class WaitingService {
             }
         }
         return "등록되지 않았습니다";
+    }
+
+    public int getId(int studentId) {
+        if(waitingRepository.existsByStudentId(studentId)) {
+            return waitingRepository.findByStudentId(studentId).getId();
+        } else {
+            return -1;
+        }
     }
 }
