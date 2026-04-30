@@ -1,6 +1,5 @@
 package kr.hs.sen.bangsan.boothwaiting.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.hs.sen.bangsan.boothwaiting.dto.WaitingCheckResponse;
 import kr.hs.sen.bangsan.boothwaiting.dto.WaitingRegisterResponse;
@@ -12,9 +11,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-
-import java.util.Objects;
 
 @Controller
 public class WaitingRegisterController {
@@ -65,7 +61,7 @@ public class WaitingRegisterController {
             WaitingCheckResponse waitingCheckResponse = waitingService.checkWaiting(studentId);
             model.addAttribute("message", waitingCheckResponse.getMessage());
             model.addAttribute("number", waitingService.checkWaiting(studentId).getNumber());
-            model.addAttribute("id", waitingService.getId(studentId));
+            model.addAttribute("id", waitingService.getIdByStudentId(studentId));
             model.addAttribute("url", "localhost:8080/register?studentId=" + studentId);
             return "waitingCheck";
         }

@@ -52,7 +52,7 @@ public class WaitingService {
     }
 
     @Transactional
-    public String EnterWaiting(int studentId) {
+    public String enterWaiting(int studentId) {
         if(accountRepository.existsByStudentId(studentId) && !waitingRepository.existsByStudentId(studentId)) {
             Account account = accountRepository.findByStudentId(studentId);
             if(account.getStatus() == Account.AccountStatus.CALLED) {
@@ -82,7 +82,7 @@ public class WaitingService {
         return "등록되지 않았습니다";
     }
 
-    public int getId(int studentId) {
+    public int getIdByStudentId(int studentId) {
         if(waitingRepository.existsByStudentId(studentId)) {
             return waitingRepository.findByStudentId(studentId).getId();
         } else {
