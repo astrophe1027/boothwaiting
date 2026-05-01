@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>입장 확인증</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        /* 1. 배경 그라데이션과 전체 톤 조절 */
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        /* 2. 티켓 형태의 카드 디자인 */
+        article {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: none;
+            background: white;
+        }
+
+        header {
+            background-color: var(--pico-primary-background) !important;
+            color: white !important;
+            text-align: center;
+            padding: 1.5rem !important;
+        }
+
+        header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        /* 3. 바코드 영역 강조 */
+        .barcode-container {
+            text-align: center;
+            padding: 2rem 1rem;
+            background: white;
+            position: relative;
+        }
+
+        /* 티켓 절취선 느낌의 효과 */
+        .barcode-container::before, .barcode-container::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #cbd5e1; /* 배경색과 맞춤 */
+            border-radius: 50%;
+            top: -10px;
+        }
+        .barcode-container::before { left: -10px; }
+        .barcode-container::after { right: -10px; }
+
+        #barcode {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .info-section {
+            padding: 1rem 1.5rem;
+            border-top: 1px dashed #e2e8f0;
+            text-align: center;
+        }
+
+        .student-id {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--pico-primary);
+        }
+
+        footer {
+            background-color: #f8fafc !important;
+            text-align: center;
+            padding: 1rem !important;
+        }
+    </style>
+</head>
+<body>
+
+<main class="container">
+    <article>
+        <header>
+            <h2>ENTRY PASS</h2>
+        </header>
+
+        <div class="barcode-container">
+            <svg id="barcode"></svg><br><br>
+            <strong>입장시 필요한 바코드입니다.</strong>
+        </div>
+
+        <footer>
+            <small style="color: #64748b;">입장 시 스태프에게 보여주세요.</small><br>
+            <small style="color: #64748b;">스캔시 자동으로 입장이 확인됩니다.</small>
+        </footer>
+    </article>
+</main>
+
+<script>
+    // 페이지 로드 시 바코드 생성
+    JsBarcode("#barcode", `10827`, {
+        format: "CODE128",
+        lineColor: "#1a1a1a",
+        width: 2.5,  /* 선 굵기 살짝 강화 */
+        height: 80,
+        displayValue: false /* 아래에 따로 표시하므로 바코드 안의 숫자는 숨김 */
+    });
+</script>
+</body>
+</html>
