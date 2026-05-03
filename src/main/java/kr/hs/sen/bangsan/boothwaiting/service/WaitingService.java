@@ -2,7 +2,7 @@ package kr.hs.sen.bangsan.boothwaiting.service;
 
 import kr.hs.sen.bangsan.boothwaiting.domain.Account;
 import kr.hs.sen.bangsan.boothwaiting.domain.Waiting;
-import kr.hs.sen.bangsan.boothwaiting.dto.WaitingCheckResponse;
+import kr.hs.sen.bangsan.boothwaiting.dto.WaitingNumberCheckResponse;
 import kr.hs.sen.bangsan.boothwaiting.dto.WaitingRegisterResponse;
 import kr.hs.sen.bangsan.boothwaiting.dto.WaitingRegisterRequest;
 import kr.hs.sen.bangsan.boothwaiting.repository.AccountRepository;
@@ -43,11 +43,11 @@ public class WaitingService {
     }
 
     //학번으로 받은 학생 앞에 대기중인 학생 수
-    public WaitingCheckResponse checkWaiting(int studentID) {
+    public WaitingNumberCheckResponse checkWaiting(int studentID) {
         if(waitingRepository.existsByStudentId(studentID)) {
-            return new WaitingCheckResponse((int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentId(studentID).getId()).count(), "대기 팀의 수를 정상적으로 불러왔습니다.");
+            return new WaitingNumberCheckResponse((int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentId(studentID).getId()).count(), "대기 팀의 수를 정상적으로 불러왔습니다.");
         } else {
-            return new WaitingCheckResponse(-1, "등록되지 않은 학번입니다.");
+            return new WaitingNumberCheckResponse(-1, "등록되지 않은 학번입니다.");
         }
     }
 

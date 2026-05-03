@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class WaitingCheckResponse {
+public class WaitingNumberCheckResponse {
     private int number;
     private String message;
 }
