@@ -15,12 +15,14 @@ public class CheckViewController {
     private WaitingService waitingService;
 
     @GetMapping(path = "/check")
-    public String check(Model model, @RequestParam(value = "studentId", required = false, defaultValue = "0")  int studentId) {
+    public String check(Model model, @RequestParam(value = "token", required = false, defaultValue = "0")  String token) {
+        int studentId = waitingService.getStudentIdByToken(token);
+
         WaitingNumberCheckResponse waitingCheckResponse = waitingService.checkWaiting(studentId);
         model.addAttribute("message", waitingCheckResponse.getMessage());
         model.addAttribute("number", waitingService.checkWaiting(studentId).getNumber());
         model.addAttribute("id", waitingService.getIdByStudentId(studentId));
-        model.addAttribute("url", "localhost:8080/register?studentId=" + studentId);
+        model.addAttribute("url", "localhost:8080/check?token=" + token);
         return "waitingCheck";
     }
 }

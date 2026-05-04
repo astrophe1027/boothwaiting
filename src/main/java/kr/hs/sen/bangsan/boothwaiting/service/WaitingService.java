@@ -3,8 +3,8 @@ package kr.hs.sen.bangsan.boothwaiting.service;
 import kr.hs.sen.bangsan.boothwaiting.domain.Account;
 import kr.hs.sen.bangsan.boothwaiting.domain.Waiting;
 import kr.hs.sen.bangsan.boothwaiting.dto.WaitingNumberCheckResponse;
-import kr.hs.sen.bangsan.boothwaiting.dto.WaitingRegisterResponse;
 import kr.hs.sen.bangsan.boothwaiting.dto.WaitingRegisterRequest;
+import kr.hs.sen.bangsan.boothwaiting.dto.WaitingRegisterResponse;
 import kr.hs.sen.bangsan.boothwaiting.repository.AccountRepository;
 import kr.hs.sen.bangsan.boothwaiting.repository.WaitingRepository;
 import org.quartz.JobKey;
@@ -13,7 +13,9 @@ import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.sqids.Sqids;
 
+import java.util.Collections;
 import java.util.Objects;
 
 @Service
@@ -27,6 +29,8 @@ public class WaitingService {
     private WaitingUpdateService waitingUpdateService;
     @Autowired
     private Scheduler scheduler;
+
+    private final Sqids sqids = Sqids.builder().minLength(4).alphabet("5kxm4j9i7sbz2r0avdwfen36g8lout1ycphq").build();
 
     @Transactional
     public WaitingRegisterResponse registerWaiting(WaitingRegisterRequest waitingRegisterRequest) {
@@ -87,6 +91,18 @@ public class WaitingService {
             return waitingRepository.findByStudentId(studentId).getId();
         } else {
             return -1;
+        }
+    }
+
+    public String getToken(int studentId) {
+        return sqids.encode(Collections.singletonList((long) studentId));
+    }
+
+    public int getStudentIdByToken(String token) {
+        try {
+            return sqids.decode(token).get(0).intValue();
+        } catch (IndexOutOfBoundsException e) {
+            return 0;
         }
     }
 }

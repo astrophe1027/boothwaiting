@@ -3,37 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>대기열 등록</title>
+    <title>대기열 확인</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script>
-        const autoHyphen = (target) => {
-            target.value = target.value
-                .replace(/[^0-9]/g, '') // 숫자가 아닌 문자 제거
-                .replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, "$1-$2-$3") // 3-4-4 구조로 나눔
-                .replace(/(\-{1,2})$/g, ""); // 마지막에 남는 하이픈 제거
-        }
-    </script>
     <style>
-        /* 기본 정렬: 상단에서 10% 정도 떨어진 지점부터 시작 */
+        /* 기본 배경 및 레이아웃 */
         body {
             display: flex;
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            padding: 2rem 1rem;
+            padding: 0; /* 모바일 외곽 여백 최소화 */
+            background-color: #f8fafc;
         }
+
         main {
             width: 100%;
             max-width: 500px;
-            margin-top: 5vh; /* 화면 상단에서 살짝만 띄움 */
+            margin-top: 0; /* 화면 상단 바짝 붙임 */
         }
-        #response-message {
-            margin-top: 1rem;
-            text-align: center;
+
+        /* 카드(Article) 내부 여백 최적화 */
+        article {
+            margin: 0 !important;
+            padding: 1rem !important; /* 내부 패딩 축소 */
         }
-        input, button {
-            font-size: 16px !important;
+
+        /* 헤더(제목) 영역 */
+        header {
+            margin-bottom: 0.5rem !important;
+            padding: 0 0 0.5rem 0 !important;
+            border-bottom: 1px solid var(--pico-muted-border-color);
+        }
+
+        header h2, header h3 {
+            margin: 0 !important;
+            margin-top: 0.8rem !important;
+        }
+
+        /* 대기 정보 섹션 (번호와 팀수 사이 간격) */
+        .grid {
+            margin-top: 0.25rem !important;
+            gap: 0.5rem !important; /* 두 칸 사이 간격 좁힘 */
+        }
+
+        .grid div {
+            padding: 0.25rem 0;
+        }
+
+        .grid h2 {
+            font-size: 1.7rem !important; /* 숫자 크기 살짝 조정 */
+            margin: 0 !important;
+            line-height: 1.2;
+        }
+
+        /* 버튼 그룹 상단 간격 */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.75rem !important; /* 정보와 버튼 사이 간격 축소 */
+        }
+
+        .btn-refresh { background-color: var(--pico-primary) !important; border: none; }
+        .btn-cancel { background-color: #e53e3e !important; border: none; }
+
+        /* 버튼 크기 조정 */
+        button {
+            font-size: 14px !important;
+            padding: 0.5rem 0.25rem !important;
+            margin-bottom: 0 !important;
+        }
+
+        /* 구분선 및 안내 사항 */
+        hr {
+            margin: 0.75rem 0 !important;
+        }
+
+        .extra-info p {
+            margin-bottom: 0.25rem !important;
+            line-height: 1.4;
+        }
+
+        small {
+            font-size: 0.75rem !important;
+            display: inline-block;
+        }
+
+        /* 링크 박스 여백 */
+        div[style*="background: var(--pico-card-background-color)"] {
+            margin-top: 0.5rem !important;
+            padding: 0.5rem !important;
         }
     </style>
 </head>
@@ -42,44 +102,79 @@
 <main class="container">
     <article>
         <header>
-            <h2 style="margin-bottom: 0;">📋 대기열 등록</h2>
+            <h2 style="margin-bottom: 0;">📋 대기열 확인</h2>
         </header>
+
         <div id="response-message">
-            <div th:fragment="registerResponse">
+            <div th:fragment="register-response">
                 <ins th:if="${id} != -1">[[${message}]]</ins>
                 <mark th:if="${id} == -1">[[${message}]]</mark>
+
                 <div th:if="${id} != -1" class="grid" style="margin-top: 1rem;">
                     <div>
-                        <small>대기 번호</small>
+                        대기 번호
                         <h2 style="color: var(--pico-primary);">[[${id}]]</h2>
                     </div>
                     <div>
-                        <small>내 앞 대기</small>
-                        <h2 th:if="${number} != -1">[[${number}]]팀</h2>
-                        <h3 th:if="${number} == -1">현재 대기 팀이 없습니다. <br> 바로 부스로 이동해주세요.</h3>
+                        내 앞 대기
+                        <h2 th:if="${number} > 0">[[${number}]]팀</h2>
+                        <h3 th:if="${number} == 0">곧 입장 순서입니다!<br>부스 앞으로 와주세요.</h3>
+                        <h3 th:if="${number} == -1">현재 대기 팀이 없습니다.</h3>
                     </div>
                 </div>
-                <hr> <div class="extra-info">
-                    <p style="margin-bottom: 0.5rem;">
-                        <strong>📌 안내 사항</strong><br>
-                        <small>입장 순서가 되면 카카오톡 알림을 드립니다. <br>
-                            알림 후 5분 내 미방문 시 대기가 자동 취소될 수 있습니다.</small>
-                    </p>
-                    <p style="margin-bottom: 0.5rem;" th:if="${id} == -1">
-                        <small>이미 호출 되신 경우엔 등록되지 않은 학번이라 뜰 수 있습니다.</small>
-                    </p>
+
+                <div th:if="${id} != -1" class="button-group" style="margin-top: 0rem;">
+                    <button class="btn-refresh"
+                            hx-get="/api/waiting"
+                            th:hx-vals="|js:{studentId: '${studentId}'}|"
+                            hx-target="#response-message"
+                            hx-swap="innerHTML">
+                        🔄 순번 새로고침
+                    </button>
+
+                    <button class="btn-cancel"
+                            style="margin-top: 0.4rem;"
+                            hx-delete="/api/waiting"
+                            hx-vals='js:{token: new URLSearchParams(window.location.search).get("token")}'
+                            hx-confirm="정말로 대기를 취소하시겠습니까?"
+                            hx-target="cancel-response"
+                            hx-swap="innerHTML">
+                        ❌ 대기 취소
+                    </button>
                 </div>
+
+                <hr> <div class="extra-info">
+                <p style="margin-bottom: 0.5rem;">
+                    <strong>📌 안내 사항</strong><br>
+                    입장 순서가 되면 카카오톡 알림을 드립니다. <br>
+                        알림 후 5분 내 미방문 시 대기가 자동 취소될 수 있습니다.
+                </p>
+                <p style="margin-bottom: 0.5rem;" th:if="${id} == -1">
+                    이미 호출 되신 경우엔 등록되지 않은 학번이라 뜰 수 있습니다.
+                </p>
+            </div>
                 <hr> <div class="extra-info">
                 <p style="margin-bottom: 0.5rem;" th:if="${id} != -1">
-                    아래 링크를 눌러 복사 후 보관하여<br>페이지를 닫아도 순번을 확인할 수 있게 해주세요
+                    아래 링크를 복사하시면 페이지를 닫아도 재접속 하실 수 있습니다.
                 </p>
-                <div style="background: var(--pico-card-background-color); padding: 0.4rem 0.6rem; border-radius: 5px; margin: 0 0 1rem 0; line-height: 1.2;">
+                <div style="background: var(--pico-card-background-color);">
                     <a href="javascript:void(0);"
                        id="shareUrl"
                        onclick="copyToClipboard()"
-                       style="display: block; cursor: pointer; text-decoration: underline; word-break: break-all; font-size: 0.9rem; font-weight: bold; color: var(--pico-primary);">
+                       style="display: block; cursor: pointer; text-decoration: underline; word-break: break-all; font-size: 1.2rem; font-weight: bold; color: var(--pico-primary);">
                         [[${url}]]
                     </a>
+                </div>
+                <script th:inline="javascript">
+                    function copyToClipboard() {
+                        const url = document.getElementById('shareUrl').innerText;
+                        navigator.clipboard.writeText(url).then(() => {
+                            alert("링크가 복사되었습니다.");
+                        });
+                    }
+                </script>
+                <div id="cancel-response">
+
                 </div>
             </div>
                 <script>
@@ -87,14 +182,6 @@
                 </script>
                 <script th:if="${number} == -1 and ${id} != -1">
                     alert("현재 대기 팀이 없습니다.\n바로 부스로 이동해주세요.");
-                </script>
-                <script>
-                    function copyToClipboard() {
-                        const url = document.getElementById('shareUrl').innerText;
-                        navigator.clipboard.writeText(url).then(() => {
-                            alert("링크가 복사되었습니다.");
-                        });
-                    }
                 </script>
             </div>
         </div>

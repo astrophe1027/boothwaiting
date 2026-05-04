@@ -8,14 +8,19 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script>
         const autoHyphen = (target) => {
-            target.value = target.value
-                .replace(/[^0-9]/g, '') // 숫자가 아닌 문자 제거
-                .replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, "$1-$2-$3") // 3-4-4 구조로 나눔
-                .replace(/(\-{1,2})$/g, ""); // 마지막에 남는 하이픈 제거
-        }
+            let val = target.value.replace(/[^0-9]/g, '');
+            let result = '';
+            if (val.length < 4) {
+                result = val;
+            } else if (val.length < 8) {
+                result = val.substring(0, 3) + "-" + val.substring(3);
+            } else {
+                result = val.substring(0, 3) + "-" + val.substring(3, val.length - 4) + "-" + val.substring(val.length - 4);
+            }
+            target.value = result.substring(0, 13);
+        };
     </script>
     <style>
-        /* 기본 정렬: 상단에서 10% 정도 떨어진 지점부터 시작 */
         body {
             display: flex;
             justify-content: center;
@@ -26,7 +31,7 @@
         main {
             width: 100%;
             max-width: 500px;
-            margin-top: 5vh; /* 화면 상단에서 살짝만 띄움 */
+            margin-top: 5vh;
         }
         #response-message {
             margin-top: 1rem;
@@ -59,7 +64,7 @@
                            pattern="\d{5}"
                            maxlength="5"
                            inputmode="numeric"
-                           title="숫자 5자리를 입력해주세요"
+                           title="학번 5자리를 입력해주세요"
                            required>
                 </label>
 
@@ -68,6 +73,7 @@
                            id="phoneNumber"
                            name="phoneNumber"
                            placeholder="010-0000-0000"
+                           pattern="^\d{3}-\d{3,4}-\d{4}$"
                            inputmode="tel"
                            autocomplete="tel"
                            maxlength="13"

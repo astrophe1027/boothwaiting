@@ -19,14 +19,14 @@ public class AccountService {
     @Autowired
     private AccountRepository accountRepository;
 
-    private final Sqids sqids = Sqids.builder().minLength(4).alphabet("").build();
+    private final Sqids sqids = Sqids.builder().minLength(4).alphabet("8as50tyuo2rjklgh6cv1zxdebm7w9fp34niq").build();
 
     public String getEncryptedId(int studentId) {
-        return sqids.encode(Collections.singletonList(Long.valueOf(accountRepository.findByStudentId(studentId).getId())));
+        return sqids.encode(Collections.singletonList(accountRepository.findByStudentId(studentId).getId().longValue()));
     }
 
     public AccountCheckResponse existsByEncryptedId(String encryptedId) {
-        Optional<Account> account = accountRepository.findById((int) (long) sqids.decode(encryptedId).get(0));
+        Optional<Account> account = accountRepository.findById(sqids.decode(encryptedId).get(0).intValue());
         if (account.isEmpty()) {
             return new AccountCheckResponse(false, "찾을 수 없습니다.");
         }
