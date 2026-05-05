@@ -32,9 +32,9 @@ public class RegisterController {
         model.addAttribute("message", response.getMessage());
         model.addAttribute("number", waitingService.checkWaiting(waitingRegisterRequest.getStudentId()).getNumber());
         if (response.getId() != -1) {
-            model.addAttribute("url", "localhost:8080/check?token=" + waitingService.getToken(waitingRegisterRequest.getStudentId()));
+            model.addAttribute("url", "localhost:8080/check?token=" + waitingService.getToken(waitingRegisterRequest.getStudentId(), response.getId()));
 
-            httpResponse.setHeader("HX-Push-Url", "http://localhost:8080/check?token=" + waitingService.getToken(waitingRegisterRequest.getStudentId()));
+            httpResponse.setHeader("HX-Push-Url", "http://localhost:8080/check?token=" + waitingService.getToken(waitingRegisterRequest.getStudentId(), response.getId()));
         }
         return "waitingCheck :: register-response";
     }

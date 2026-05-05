@@ -31,7 +31,7 @@ public class WaitingService {
     @Autowired
     private Scheduler scheduler;
 
-    private final Sqids sqids = Sqids.builder().minLength(4).alphabet("5kxm4j9i7sbz2r0avdwfen36g8lout1ycphq").build();
+    private final Sqids sqids = Sqids.builder().minLength(6).alphabet("5kxm4j9i7sbz2r0avdwfen36g8lout1ycphq").build();
 
     @Transactional
     public WaitingRegisterResponse registerWaiting(WaitingRegisterRequest waitingRegisterRequest) {
@@ -95,8 +95,8 @@ public class WaitingService {
         }
     }
 
-    public String getToken(int studentId) {
-        return sqids.encode(List.of((long) studentId, (long) this.getIdByStudentId(studentId)));
+    public String getToken(int studentId, int id) {
+        return sqids.encode(List.of((long) studentId, (long) id));
     }
 
     public int getStudentIdByToken(String token) {
