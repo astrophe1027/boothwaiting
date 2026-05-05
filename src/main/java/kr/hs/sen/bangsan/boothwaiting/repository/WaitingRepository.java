@@ -7,4 +7,6 @@ public interface WaitingRepository extends JpaRepository<Waiting, Integer> {
     boolean existsByStudentId(int studentId);
 
     Waiting findByStudentId(int studentId);
+
+    void deleteByStudentId(int studentId);
 }

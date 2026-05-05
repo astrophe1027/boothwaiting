@@ -31,10 +31,11 @@ public class RegisterController {
         model.addAttribute("id", response.getId());
         model.addAttribute("message", response.getMessage());
         model.addAttribute("number", waitingService.checkWaiting(waitingRegisterRequest.getStudentId()).getNumber());
-        model.addAttribute("url", "localhost:8080/check?token=" + waitingService.getToken(waitingRegisterRequest.getStudentId()));
+        if (response.getId() != -1) {
+            model.addAttribute("url", "localhost:8080/check?token=" + waitingService.getToken(waitingRegisterRequest.getStudentId()));
 
-        httpResponse.setHeader("HX-Push-Url", "http://localhost:8080/check?token=" + waitingService.getToken(waitingRegisterRequest.getStudentId()));
-
+            httpResponse.setHeader("HX-Push-Url", "http://localhost:8080/check?token=" + waitingService.getToken(waitingRegisterRequest.getStudentId()));
+        }
         return "waitingCheck :: register-response";
     }
 

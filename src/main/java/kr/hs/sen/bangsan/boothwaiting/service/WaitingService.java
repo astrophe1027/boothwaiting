@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.sqids.Sqids;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -95,14 +96,45 @@ public class WaitingService {
     }
 
     public String getToken(int studentId) {
-        return sqids.encode(Collections.singletonList((long) studentId));
+        return sqids.encode(List.of((long) studentId, (long) this.getIdByStudentId(studentId)));
     }
 
     public int getStudentIdByToken(String token) {
         try {
-            return sqids.decode(token).get(0).intValue();
+            if(waitingRepository.existsById(sqids.decode(token).get(1).intValue())) {
+                return sqids.decode(token).get(0).intValue();
+            } else {
+                return 0;
+            }
         } catch (IndexOutOfBoundsException e) {
             return 0;
+        }
+    }
+
+    @Transactional
+    public String cancelWaiting(int studentId) {
+        if(waitingRepository.existsByStudentId(studentId)) {
+            waitingRepository.deleteByStudentId(studentId);
+
+            return "정상적으로 취소 되었습니다.";
+        } else if (accountRepository.existsByStudentId(studentId) && accountRepository.findByStudentId(studentId).getStatus() == Account.AccountStatus.CALLED) {
+            accountRepository.findByStudentId(studentId).cancelEntry();
+
+            try {
+                JobKey jobKey = JobKey.jobKey(Objects.toString(studentId), "cancel-group");
+
+                // 스케줄러 삭제
+                if (scheduler.checkExists(jobKey)) {
+                    scheduler.deleteJob(jobKey);
+                }
+            } catch (SchedulerException e) {
+                System.out.println("타이머 취소중 오류");
+                e.printStackTrace(System.out);
+            }
+
+            return "정상적으로 취소 되었습니다.";
+        }else {
+            return "계정을 찾을 수 없습니다.";
         }
     }
 }

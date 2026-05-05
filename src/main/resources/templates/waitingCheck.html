@@ -115,29 +115,29 @@
                         대기 번호
                         <h2 style="color: var(--pico-primary);">[[${id}]]</h2>
                     </div>
-                    <div>
+                    <div id="refresh-response" th:fragment="refresh-response">
                         내 앞 대기
-                        <h2 th:if="${number} > 0">[[${number}]]팀</h2>
-                        <h3 th:if="${number} == 0">곧 입장 순서입니다!<br>부스 앞으로 와주세요.</h3>
+                        <h2 th:if="${number} > 1">[[${number}]]팀</h2>
+                        <h3 th:if="${number} == 0 or ${number} == 1">곧 입장 순서입니다!<br>부스 앞으로 와주세요.</h3>
                         <h3 th:if="${number} == -1">현재 대기 팀이 없습니다.</h3>
                     </div>
                 </div>
 
-                <div th:if="${id} != -1" class="button-group" style="margin-top: 0rem;">
+                <div th:if="${id} != -1" class="button-group" style="margin-top: 0; gap: 0.75rem;">
                     <button class="btn-refresh"
+                            hx-trigger="every 5s, click"
                             hx-get="/api/waiting"
-                            th:hx-vals="|js:{studentId: '${studentId}'}|"
-                            hx-target="#response-message"
-                            hx-swap="innerHTML">
+                            hx-vals='js:{token: new URLSearchParams(window.location.search).get("token")}'
+                            hx-target="#refresh-response"
+                            hx-swap="outerHTML">
                         🔄 순번 새로고침
                     </button>
 
                     <button class="btn-cancel"
-                            style="margin-top: 0.4rem;"
                             hx-delete="/api/waiting"
                             hx-vals='js:{token: new URLSearchParams(window.location.search).get("token")}'
                             hx-confirm="정말로 대기를 취소하시겠습니까?"
-                            hx-target="cancel-response"
+                            hx-target="#cancel-response"
                             hx-swap="innerHTML">
                         ❌ 대기 취소
                     </button>
@@ -153,8 +153,8 @@
                     이미 호출 되신 경우엔 등록되지 않은 학번이라 뜰 수 있습니다.
                 </p>
             </div>
-                <hr> <div class="extra-info">
-                <p style="margin-bottom: 0.5rem;" th:if="${id} != -1">
+                <hr> <div class="extra-info"  th:if="${id} != -1">
+                <p style="margin-bottom: 0.5rem;">
                     아래 링크를 복사하시면 페이지를 닫아도 재접속 하실 수 있습니다.
                 </p>
                 <div style="background: var(--pico-card-background-color);">
