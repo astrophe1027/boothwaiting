@@ -32,15 +32,19 @@ public class Account {
     @CreatedDate
     private LocalDateTime time;
 
+    @Column(nullable = false)
+    private Integer waitingId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccountStatus status;
 
-    public Account(Integer studentID, String name) {
+    public Account(Integer studentID, String name,  int waitingId) {
         this.studentId = studentID;
         this.name = name;
         this.token = 0;
         this.status = AccountStatus.CALLED;
+        this.waitingId = waitingId;
     }
 
     public void completeEntry() {
@@ -58,9 +62,10 @@ public class Account {
         this.time = LocalDateTime.now();
     }
 
-    public void recall() {
+    public void recall(int waitingId) {
         this.status = AccountStatus.CALLED;
         this.time = LocalDateTime.now();
+        this.waitingId = waitingId;
     }
 
     public void temporarilyExit() {

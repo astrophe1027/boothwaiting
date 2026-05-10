@@ -43,9 +43,9 @@ public class WaitingUpdateService {
             // 입장 시킬 사람 계정 찾기 or 계정 생성
             if(accountRepository.existsByStudentId(waiting.getStudentId())) {
                 account = accountRepository.findByStudentId(waiting.getStudentId());
-                account.recall();
+                account.recall(waiting.getId());
             } else {
-                account = new Account(waiting.getStudentId(), waiting.getName());
+                account = new Account(waiting.getStudentId(), waiting.getName(), waiting.getId());
                 accountRepository.save(account);
             }
             String phoneNumber = waiting.getPhoneNumber();
@@ -97,8 +97,8 @@ public class WaitingUpdateService {
             int n = 3;
             // 앞에 n명 남은사람에게 메세지 발송
             if(waitingRepository.findAll().size() >= n+1){
-                List<Waiting> waitings = waitingRepository.findAll(Sort.by("id"));
-                Waiting newWaiting = waitings.get(n);
+                List<Waiting> waiters = waitingRepository.findAll(Sort.by("id"));
+                Waiting newWaiting = waiters.get(n);
                 // TODO: 앞에 n명 남은 사람에게 메세지 발송
                 System.out.println(newWaiting.getStudentId()+" "+newWaiting.getPhoneNumber()+" 부스 근처로 이동해주세요");
             }

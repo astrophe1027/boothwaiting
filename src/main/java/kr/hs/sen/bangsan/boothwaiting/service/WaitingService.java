@@ -52,6 +52,9 @@ public class WaitingService {
         if(waitingRepository.existsByStudentId(studentID)) {
             return new WaitingNumberCheckResponse((int) waitingRepository.findAll().stream().filter(account -> account.getId() < waitingRepository.findByStudentId(studentID).getId()).count(), "대기 팀의 수를 정상적으로 불러왔습니다.");
         } else {
+            if(accountRepository.existsByStudentId(studentID) && accountRepository.findByStudentId(studentID).getStatus() == Account.AccountStatus.CALLED) {
+                return new WaitingNumberCheckResponse(-1, "호출되셨습니다.");
+            }
             return new WaitingNumberCheckResponse(-1, "등록되지 않은 학번입니다.");
         }
     }
@@ -90,6 +93,8 @@ public class WaitingService {
     public int getIdByStudentId(int studentId) {
         if(waitingRepository.existsByStudentId(studentId)) {
             return waitingRepository.findByStudentId(studentId).getId();
+        } else if (accountRepository.existsByStudentId(studentId) && accountRepository.findByStudentId(studentId).getStatus() == Account.AccountStatus.CALLED) {
+            return accountRepository.findByStudentId(studentId).getWaitingId();
         } else {
             return -1;
         }
@@ -101,12 +106,20 @@ public class WaitingService {
 
     public int getStudentIdByToken(String token) {
         try {
-            if(waitingRepository.existsById(sqids.decode(token).get(1).intValue())) {
-                return sqids.decode(token).get(0).intValue();
-            } else {
+            List<Long> decodedTokens = sqids.decode(token);
+            if(waitingRepository.existsById(decodedTokens.get(1).intValue())) {
+                return decodedTokens.get(0).intValue();
+            } else if (accountRepository.existsByWaitingId(decodedTokens.get(1).intValue())) {
+                if(accountRepository.findByWaitingId(decodedTokens.get(1).intValue()).getStatus() == Account.AccountStatus.CALLED) {
+                    return decodedTokens.get(0).intValue();
+                } else {
+                    return 0;
+                }
+            } else{
                 return 0;
             }
         } catch (IndexOutOfBoundsException e) {
+            e.printStackTrace(System.out);
             return 0;
         }
     }
