@@ -17,7 +17,7 @@ public class RefreshController {
     AccountService accountService;
 
     @GetMapping(path = "/api/waiting")
-    public String waitingRefresh(Model model, @RequestParam(value = "token", defaultValue = "") String token) {
+    public String waitingRefresh(Model model, @RequestParam(value = "token", defaultValue = "0") String token) {
         model.addAttribute("number", waitingService.checkWaiting(waitingService.getStudentIdByToken(token)).getNumber());
         return "waitingCheck :: refresh-response";
     }

@@ -20,7 +20,7 @@ public class CheckViewController {
 
         WaitingNumberCheckResponse waitingCheckResponse = waitingService.checkWaiting(studentId);
         model.addAttribute("message", waitingCheckResponse.getMessage());
-        model.addAttribute("number", waitingService.checkWaiting(studentId).getNumber());
+        model.addAttribute("number", waitingCheckResponse.getNumber());
         model.addAttribute("id", waitingService.getIdByStudentId(studentId));
         model.addAttribute("url", "localhost:8080/check?token=" + token);
         return "waitingCheck";

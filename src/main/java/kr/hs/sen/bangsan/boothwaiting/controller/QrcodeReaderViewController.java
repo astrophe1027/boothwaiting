@@ -4,9 +4,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
-public class RegisterViewController {
-    @GetMapping(path = "/register")
-    public String register() {
-        return "register";
+public class QrcodeReaderViewController {
+
+    @GetMapping(path = "/qr-reader")
+    public String barcode() {
+        return "qrcodeReader";
     }
 }

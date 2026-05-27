@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>입장 패스 QR코드 스캐너</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #interactive {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 350px;
+            border: 4px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+        }
+        /* html5-qrcode가 내부적으로 생성하는 video 요소를 구역에 맞춤 */
+        #interactive video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+        }
+        /* QR코드 조준 가이드선 */
+        .scan-laser {
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            width: 90%;
+            height: 2px;
+            background-color: red;
+            box-shadow: 0 0 8px red;
+            transform: translateY(-50%);
+            z-index: 10;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0.4; }
+        }
+        /* 서버 결과 메시지 팝업 */
+        #result-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 20px 40px;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            display: none;
+            z-index: 100;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .success { color: #4CAF50; }
+        .error { color: #F44336; }
+    </style>
+</head>
+<body>
+
+<h1>🎟️ 입장 패스 스캐너 (QR)</h1>
+
+<div id="interactive">
+    <div class="scan-laser"></div>
+</div>
+
+<div id="result-toast"></div>
+
+<script>
+    let isProcessing = false;
+    let html5QrCode;
+
+    // 1. QR 스캐너 초기화 및 시작 함수
+    function startScanner() {
+        // 'interactive' 디브 안에 QR 스캐너 생성
+        html5QrCode = new Html5Qrcode("interactive");
+
+        const config = {
+            fps: 10, // 초당 프레임 수 (10번 스캔)
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+                // 화면 크기에 맞게 가로세로 정사각형 조준 영역 유동적 설정
+                const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                const qrboxSize = Math.floor(minEdge * 0.8);
+                return { width: qrboxSize, height: qrboxSize };
+            },
+            // 성능 최적화: 속도 향상을 위해 오직 QR코드 포맷만 읽도록 강제 지정
+            formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
+        };
+
+        // 후면 카메라(environment)를 우선으로 스캐너 시작
+        html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            onScanSuccess
+        ).catch(err => {
+            console.error("카메라 시작 실패:", err);
+            alert("카메라를 초기화할 수 없습니다. 권한을 확인해주세요.");
+        });
+    }
+
+    // 2. QR코드가 성공적으로 감지되었을 때의 이벤트 처리
+    function onScanSuccess(decodedText, decodedResult) {
+        // 이미 서버와 통신 중이면 중복 요청 방지
+        if (isProcessing) return;
+        isProcessing = true;
+
+        console.log("인식된 QR 데이터: " + decodedText);
+
+        // 비프음 재생
+        playBeep();
+
+        // 서버로 데이터 전송 (QR 안에 담긴 텍스트를 토큰으로 보냄)
+        sendToServer(decodedText);
+    }
+
+    // 3. 서버 통신 함수
+    function sendToServer(qrData) {
+        const serverUrl = `http://localhost:8080/api/entry?token=${encodeURIComponent(qrData)}`;
+
+        fetch(serverUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`서버 오류 (${res.status})`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                // 오직 서버에서 응답으로 내려준 메시지만 화면에 표시
+                showToast(data.message, "success");
+            })
+            .catch(err => {
+                console.error("통신 에러:", err);
+                showToast("서버 연결에 실패했습니다.", "error");
+            })
+            .finally(() => {
+                // 요청 처리가 끝나고 1초 뒤 다음 QR코드를 인식할 수 있도록 잠금 해제
+                setTimeout(() => {
+                    isProcessing = false;
+                }, 1000);
+            });
+    }
+
+    // 4. 메시지를 잠시 띄웠다 사라지게 하는 함수
+    function showToast(message, type) {
+        const toast = document.getElementById("result-toast");
+        toast.innerHTML = `<span class="${type}">${message}</span>`;
+        toast.style.display = "block";
+
+        setTimeout(() => {
+            toast.style.display = "none";
+        }, 2500);
+    }
+
+    // 오디오 효과음 (바코드 스캔 느낌)
+    function playBeep() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            oscillator.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        } catch (e) {
+            console.warn("오디오 플레이 실패 (브라우저 상호작용 필요):", e);
+        }
+    }
+
+    // 페이지 로드 시 스캐너 즉시 시작
+    window.addEventListener("DOMContentLoaded", startScanner);
+</script>
+</body>
+</html>

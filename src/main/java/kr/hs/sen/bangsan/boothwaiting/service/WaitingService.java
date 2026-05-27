@@ -35,11 +35,12 @@ public class WaitingService {
 
     @Transactional
     public WaitingRegisterResponse registerWaiting(WaitingRegisterRequest waitingRegisterRequest) {
-        Account account = accountRepository.findByStudentId(waitingRegisterRequest.getStudentId());
+        int studentId = Integer.parseInt(waitingRegisterRequest.getStudentId());
+        Account account = accountRepository.findByStudentId(studentId);
         if (account != null && (account.getStatus() == Account.AccountStatus.CALLED || account.getStatus() == Account.AccountStatus.ENTERED || account.getStatus() == Account.AccountStatus.TEMPORARILY_EXIT)) {
             return new WaitingRegisterResponse(-1, "이미 호출 혹은 입장된 학번입니다.");
         }
-        if (waitingRepository.existsByStudentId(waitingRegisterRequest.getStudentId())) {
+        if (waitingRepository.existsByStudentId(studentId)) {
             return new WaitingRegisterResponse(-1, "이미 등록된 학번입니다.");
         }
         Waiting waiting = waitingRepository.save(waitingRegisterRequest.toEntity());
@@ -57,37 +58,6 @@ public class WaitingService {
             }
             return new WaitingNumberCheckResponse(-1, "등록되지 않은 학번입니다.");
         }
-    }
-
-    @Transactional
-    public String enterWaiting(int studentId) {
-        if(accountRepository.existsByStudentId(studentId) && !waitingRepository.existsByStudentId(studentId)) {
-            Account account = accountRepository.findByStudentId(studentId);
-             if (account.getStatus() == Account.AccountStatus.CANCELED) {
-                return "부재로 인해 이미 입장 취소되었습니다.";
-            } else if (account.getStatus() == Account.AccountStatus.ENTERED) {
-                return "이미 입장되어 있습니다.";
-            } else if(account.getStatus() == Account.AccountStatus.CALLED) {
-                 // 입장 로직
-                account.completeEntry();
-
-                try {
-                    JobKey jobKey = JobKey.jobKey(Objects.toString(studentId), "cancel-group");
-
-                    // 스케줄러 삭제
-                    if (scheduler.checkExists(jobKey)) {
-                        scheduler.deleteJob(jobKey);
-                    }
-                } catch (SchedulerException e) {
-                    System.out.println("타이머 취소중 오류");
-                    e.printStackTrace(System.out);
-                }
-
-                // TODO:이용제한 시간 타이머 만들기
-                return "입장되었습니다.";
-            }
-        }
-        return "등록되지 않았습니다";
     }
 
     public int getIdByStudentId(int studentId) {
@@ -119,7 +89,6 @@ public class WaitingService {
                 return 0;
             }
         } catch (IndexOutOfBoundsException e) {
-            e.printStackTrace(System.out);
             return 0;
         }
     }

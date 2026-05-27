@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>입장 확인증</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         /* 1. 배경 그라데이션과 전체 톤 조절 */
         body {
@@ -42,7 +42,7 @@
         }
 
         /* 3. 바코드 영역 강조 */
-        .barcode-container {
+        .qrcode-container {
             text-align: center;
             padding: 2rem 1rem;
             background: white;
@@ -50,7 +50,7 @@
         }
 
         /* 티켓 절취선 느낌의 효과 */
-        .barcode-container::before, .barcode-container::after {
+        .qrcode-container::before, .barcode-container::after {
             content: '';
             position: absolute;
             width: 20px;
@@ -59,18 +59,15 @@
             border-radius: 50%;
             top: -10px;
         }
-        .barcode-container::before { left: -10px; }
-        .barcode-container::after { right: -10px; }
+        .qrcode-container::before { left: -10px; }
+        .qrcode-container::after { right: -10px; }
 
-        #barcode {
+        #qrcode {
             max-width: 100%;
             height: auto;
-        }
 
-        .info-section {
-            padding: 1rem 1.5rem;
-            border-top: 1px dashed #e2e8f0;
-            text-align: center;
+            display: flex;
+            justify-content: center; /* 가로 기준 가운데 정렬 */
         }
 
         footer {
@@ -88,26 +85,37 @@
             <h2>ENTRY PASS</h2>
         </header>
 
-        <div class="barcode-container">
-            <svg id="barcode"></svg><br><br>
-            <strong>입장시 필요한 바코드입니다.</strong>
-        </div>
+        <div>
+            <div class="qrcode-container">
+                <mark th:if="${id} == -1">잘못된 페이지입니다.</mark>
+                <div id="qrcode"></div><br>
+                <strong  th:if="${id} != -1">입장시 필요한 바코드입니다.</strong>
+            </div>
 
-        <footer>
-            <small style="color: #64748b;">입장 시 스태프에게 보여주세요.</small><br>
-            <small style="color: #64748b;">스캔시 자동으로 입장이 확인됩니다.</small>
-        </footer>
+            <footer  th:if="${id} != -1">
+                <small style="color: #64748b;">입장 시 스태프에게 보여주세요.</small><br>
+                <small style="color: #64748b;">스캔시 자동으로 입장이 확인됩니다.</small>
+            </footer>
+        </div>
     </article>
 </main>
 
 <script>
-    // 페이지 로드 시 바코드 생성
-    JsBarcode("#barcode", `10827`, {
-        format: "CODE128",
-        lineColor: "#1a1a1a",
-        width: 2.5,  /* 선 굵기 살짝 강화 */
-        height: 80,
-        displayValue: false /* 아래에 따로 표시하므로 바코드 안의 숫자는 숨김 */
+    // 페이지 로드 시 QR코드 생성
+    window.addEventListener("DOMContentLoaded", function() {
+        const qrContainer = document.getElementById("qrcode");
+
+        // 기존에 잔여 QR이 남아있을 경우를 대비해 초기화
+        qrContainer.innerHTML = "";
+
+        new QRCode(qrContainer, {
+            text: "[[${token}]]",        // QR코드에 담을 데이터 (서버 토큰)
+            width: 150,                  // 가로 크기 (픽셀)
+            height: 150,                 // 세로 크기 (픽셀)
+            colorDark: "#1a1a1a",        // QR코드 내부 선/점 색상
+            colorLight: "#ffffff",       // QR코드 배경 색상
+            correctLevel: QRCode.CorrectLevel.H // 오류 복구 레벨 (L, M, Q, H - H가 가장 높음)
+        });
     });
 </script>
 </body>

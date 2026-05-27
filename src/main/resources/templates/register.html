@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>대기열 등록</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script>
         const autoHyphen = (target) => {
             let val = target.value.replace(/[^0-9]/g, '');
@@ -46,47 +45,98 @@
 
 <main class="container">
     <article>
+
         <header>
             <h2 style="margin-bottom: 0;">📋 대기열 등록</h2>
         </header>
-        <div id="response-message">
-            <form hx-post="/api/waiting" hx-target="#response-message" hx-swap="innerHTML">
 
-                <label for="name">이름
-                    <input type="text" id="name" name="name" placeholder="이름을 입력하세요" required>
-                </label>
+        <form id="waitingForm">
 
-                <label for="studentId">학번 (5자리)
-                    <input type="text"
-                           id="studentId"
-                           name="studentId"
-                           placeholder="12345"
-                           pattern="\d{5}"
-                           maxlength="5"
-                           inputmode="numeric"
-                           title="학번 5자리를 입력해주세요"
-                           required>
-                </label>
+            <label for="name">이름
+                <input type="text" id="name" name="name" placeholder="이름을 입력하세요" required>
+            </label>
 
-                <label for="phoneNumber">전화번호
-                    <input type="tel"
-                           id="phoneNumber"
-                           name="phoneNumber"
-                           placeholder="010-0000-0000"
-                           pattern="^\d{3}-\d{3,4}-\d{4}$"
-                           inputmode="tel"
-                           autocomplete="tel"
-                           maxlength="13"
-                           oninput="autoHyphen(this)"
-                           onchange="autoHyphen(this)"
-                           required>
-                </label>
+            <label for="studentId">학번 (5자리)
+                <input type="text"
+                       id="studentId"
+                       name="studentId"
+                       placeholder="12345"
+                       pattern="\d{5}"
+                       maxlength="5"
+                       inputmode="numeric"
+                       title="학번 5자리를 입력해주세요"
+                       required>
+            </label>
 
-                <button type="submit">등록하기</button>
-            </form>
-        </div>
+            <label for="phoneNumber">전화번호
+                <input type="tel"
+                       id="phoneNumber"
+                       name="phoneNumber"
+                       placeholder="010-0000-0000"
+                       pattern="^\d{3}-\d{3,4}-\d{4}$"
+                       inputmode="tel"
+                       autocomplete="tel"
+                       maxlength="13"
+                       oninput="autoHyphen(this)"
+                       onchange="autoHyphen(this)"
+                       required>
+            </label>
+
+            <button type="submit">등록하기</button>
+
+        </form>
     </article>
 </main>
 
+<script>
+    /*
+    document.getElementById('waitingForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const data = Object.fromEntries(new FormData(this));
+        try {
+            const response = await axios.post('/api/waiting', data);
+
+            if (response.request.responseURL) {
+                window.location.href = response.request.responseURL;
+            }
+        } catch (error) {
+            if (error.response) {
+                alert(error.response.data);
+            } else {
+                alert('네트워크 오류가 발생했습니다.');
+            }
+        }
+    });
+    */
+    document.getElementById('waitingForm').addEventListener('submit', async function(e) {
+
+        e.preventDefault();
+
+        const data = Object.fromEntries(new FormData(this));
+
+        try {
+            const response = await fetch('/api/waiting', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                alert(await response.text());
+            } else if (response.redirected) {
+                window.location.href = response.url;
+            }
+        } catch (error) {
+            if (error.response) {
+                alert(error.response.data);
+            } else {
+                alert('네트워크 오류가 발생했습니다.');
+            }
+        }
+    });
+</script>
 </body>
 </html>
