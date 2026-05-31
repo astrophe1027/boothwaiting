@@ -26,25 +26,25 @@ public class Account {
     private String name;
 
     @Column(nullable = false)
-    private Integer token;
+    private Integer coin;
 
     @Column(nullable = false)
     @CreatedDate
     private LocalDateTime time;
 
     @Column(nullable = false)
-    private Integer waitingId;
+    private String token;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccountStatus status;
 
-    public Account(Integer studentID, String name,  int waitingId) {
+    public Account(Integer studentID, String name, String token) {
         this.studentId = studentID;
         this.name = name;
-        this.token = 0;
+        this.coin = 0;
         this.status = AccountStatus.CALLED;
-        this.waitingId = waitingId;
+        this.token = token;
     }
 
     public void completeEntry() {
@@ -62,10 +62,10 @@ public class Account {
         this.time = LocalDateTime.now();
     }
 
-    public void recall(int waitingId) {
+    public void recall(String token) {
         this.status = AccountStatus.CALLED;
         this.time = LocalDateTime.now();
-        this.waitingId = waitingId;
+        this.token = token;
     }
 
     public void temporarilyExit() {

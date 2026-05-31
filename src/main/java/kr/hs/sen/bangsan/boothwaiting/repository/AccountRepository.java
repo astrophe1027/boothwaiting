@@ -12,7 +12,7 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
 
     Account findByStudentId(int studentId);
 
-    boolean existsByWaitingId(int waitingId);
+    boolean existsByToken(String token);
 
-    Account findByWaitingId(int waitingId);
+    Account findByToken(String token);
 }

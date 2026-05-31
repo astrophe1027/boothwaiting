@@ -40,10 +40,10 @@ public class RegisterController {
 
         int studentId = Integer.parseInt(waitingRegisterRequest.getStudentId());
         if(accountService.isCalled(studentId)) {
-            return "redirect:/pass?token=" + waitingService.getToken(studentId, response.getId());
+            return "redirect:/pass?token=" + waitingService.getToken(studentId);
         }
 
-        return "redirect:/check?token=" + waitingService.getToken(studentId, response.getId());
+        return "redirect:/check?token=" + waitingService.getToken(studentId);
        //return "waitingCheck";
     }
 

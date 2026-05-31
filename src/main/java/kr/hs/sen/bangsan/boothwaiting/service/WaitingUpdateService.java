@@ -43,9 +43,9 @@ public class WaitingUpdateService {
             // 입장 시킬 사람 계정 찾기 or 계정 생성
             if(accountRepository.existsByStudentId(waiting.getStudentId())) {
                 account = accountRepository.findByStudentId(waiting.getStudentId());
-                account.recall(waiting.getId());
+                account.recall(waiting.getToken());
             } else {
-                account = new Account(waiting.getStudentId(), waiting.getName(), waiting.getId());
+                account = new Account(waiting.getStudentId(), waiting.getName(), waiting.getToken());
                 accountRepository.save(account);
             }
             String phoneNumber = waiting.getPhoneNumber();

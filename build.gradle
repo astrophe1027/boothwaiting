@@ -38,8 +38,8 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.springframework.boot:spring-boot-starter-quartz'
-    implementation 'org.sqids:sqids:0.1.0'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'com.aventrix.jnanoid:jnanoid:2.0.0'
 }
 
 tasks.named('test') {

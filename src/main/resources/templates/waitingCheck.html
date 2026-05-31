@@ -133,12 +133,8 @@
                         🔄 순번 새로고침
                     </button>
 
-                    <button class="btn-cancel"
-                            hx-delete="/api/waiting"
-                            hx-vals='js:{token: new URLSearchParams(window.location.search).get("token")}'
-                            hx-confirm="정말로 대기를 취소하시겠습니까?"
-                            hx-target="#cancel-response"
-                            hx-swap="innerHTML">
+                    <button id = "cancel"
+                            class="btn-cancel">
                         ❌ 대기 취소
                     </button>
                 </div>
@@ -173,17 +169,37 @@
                         });
                     }
                 </script>
-                <div id="cancel-response">
-
-                </div>
             </div>
-                <script>
-                    alert("[[${message}]]");
-                </script>
             </div>
         </div>
     </article>
 </main>
+<script>
+    document.getElementById('cancel').addEventListener('click', async function(e) {
 
+        const result = confirm('정말 취소하시겠습니까?')
+
+        if (result) {
+            e.preventDefault()
+            try {
+                const response = await fetch('/api/waiting?token='+new URLSearchParams(window.location.search).get("token"), {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(data.message);
+                    location.replace("http://localhost:8080/register")
+                }
+            } catch (error) {
+                if (error.response) {
+                    alert(error.response.data);
+                } else {
+                    alert('네트워크 오류가 발생했습니다.');
+                }
+            }
+        }
+    });
+</script>
 </body>
 </html>

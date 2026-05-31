@@ -89,26 +89,6 @@
 </main>
 
 <script>
-    /*
-    document.getElementById('waitingForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const data = Object.fromEntries(new FormData(this));
-        try {
-            const response = await axios.post('/api/waiting', data);
-
-            if (response.request.responseURL) {
-                window.location.href = response.request.responseURL;
-            }
-        } catch (error) {
-            if (error.response) {
-                alert(error.response.data);
-            } else {
-                alert('네트워크 오류가 발생했습니다.');
-            }
-        }
-    });
-    */
     document.getElementById('waitingForm').addEventListener('submit', async function(e) {
 
         e.preventDefault();

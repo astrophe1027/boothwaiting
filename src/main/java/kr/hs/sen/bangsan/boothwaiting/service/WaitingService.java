@@ -13,10 +13,7 @@ import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.sqids.Sqids;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -30,8 +27,6 @@ public class WaitingService {
     private WaitingUpdateService waitingUpdateService;
     @Autowired
     private Scheduler scheduler;
-
-    private final Sqids sqids = Sqids.builder().minLength(6).alphabet("5kxm4j9i7sbz2r0avdwfen36g8lout1ycphq").build();
 
     @Transactional
     public WaitingRegisterResponse registerWaiting(WaitingRegisterRequest waitingRegisterRequest) {
@@ -63,34 +58,34 @@ public class WaitingService {
     public int getIdByStudentId(int studentId) {
         if(waitingRepository.existsByStudentId(studentId)) {
             return waitingRepository.findByStudentId(studentId).getId();
-        } else if (accountRepository.existsByStudentId(studentId) && accountRepository.findByStudentId(studentId).getStatus() == Account.AccountStatus.CALLED) {
-            return accountRepository.findByStudentId(studentId).getWaitingId();
         } else {
             return -1;
         }
     }
 
-    public String getToken(int studentId, int id) {
-        return sqids.encode(List.of((long) studentId, (long) id));
+    public String getToken(int studentId) {
+        if(waitingRepository.existsByStudentId(studentId)) {
+            return waitingRepository.findByStudentId(studentId).getToken();
+        } else {
+            if(accountRepository.existsByStudentId(studentId)) {
+                return accountRepository.findByStudentId(studentId).getToken();
+            }
+        }
+        return "";
     }
 
     public int getStudentIdByToken(String token) {
-        try {
-            List<Long> decodedTokens = sqids.decode(token);
-            if(waitingRepository.existsById(decodedTokens.get(1).intValue())) {
-                return decodedTokens.get(0).intValue();
-            } else if (accountRepository.existsByWaitingId(decodedTokens.get(1).intValue())) {
-                if(accountRepository.findByWaitingId(decodedTokens.get(1).intValue()).getStatus() == Account.AccountStatus.CALLED) {
-                    return decodedTokens.get(0).intValue();
+            if(waitingRepository.existsByToken(token)) {
+                return waitingRepository.findByToken(token).getStudentId();
+            } else if (accountRepository.existsByToken(token)) {
+                if(accountRepository.findByToken(token).getStatus() == Account.AccountStatus.CALLED) {
+                    return accountRepository.findByToken(token).getStudentId();
                 } else {
                     return 0;
                 }
             } else{
                 return 0;
             }
-        } catch (IndexOutOfBoundsException e) {
-            return 0;
-        }
     }
 
     @Transactional
