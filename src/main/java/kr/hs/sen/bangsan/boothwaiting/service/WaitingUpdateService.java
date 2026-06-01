@@ -1,5 +1,6 @@
 package kr.hs.sen.bangsan.boothwaiting.service;
 
+import kr.hs.sen.bangsan.boothwaiting.controller.MonitorController;
 import kr.hs.sen.bangsan.boothwaiting.domain.Account;
 import kr.hs.sen.bangsan.boothwaiting.domain.Waiting;
 import kr.hs.sen.bangsan.boothwaiting.repository.AccountRepository;
@@ -21,6 +22,8 @@ public class WaitingUpdateService {
     private WaitingRepository waitingRepository;
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    private MonitorController monitorController;
     @Autowired
     private Scheduler scheduler;
 
@@ -103,5 +106,6 @@ public class WaitingUpdateService {
                 System.out.println(newWaiting.getStudentId()+" "+newWaiting.getPhoneNumber()+" 부스 근처로 이동해주세요");
             }
         }
+        monitorController.broadcastCurrentAccounts();
     }
 }

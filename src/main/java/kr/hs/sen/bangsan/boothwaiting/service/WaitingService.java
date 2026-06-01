@@ -1,5 +1,6 @@
 package kr.hs.sen.bangsan.boothwaiting.service;
 
+import kr.hs.sen.bangsan.boothwaiting.controller.MonitorController;
 import kr.hs.sen.bangsan.boothwaiting.domain.Account;
 import kr.hs.sen.bangsan.boothwaiting.domain.Waiting;
 import kr.hs.sen.bangsan.boothwaiting.dto.WaitingNumberCheckResponse;
@@ -25,6 +26,8 @@ public class WaitingService {
     private AccountRepository accountRepository;
     @Autowired
     private WaitingUpdateService waitingUpdateService;
+    @Autowired
+    private MonitorController monitorController;
     @Autowired
     private Scheduler scheduler;
 
@@ -108,7 +111,7 @@ public class WaitingService {
                 System.out.println("타이머 취소중 오류");
                 e.printStackTrace(System.out);
             }
-
+            monitorController.broadcastCurrentAccounts();
             return "정상적으로 취소 되었습니다.";
         }else {
             return "계정을 찾을 수 없습니다.";

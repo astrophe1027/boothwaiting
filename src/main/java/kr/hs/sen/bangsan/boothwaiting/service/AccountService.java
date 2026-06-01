@@ -1,5 +1,6 @@
 package kr.hs.sen.bangsan.boothwaiting.service;
 
+import kr.hs.sen.bangsan.boothwaiting.controller.MonitorController;
 import kr.hs.sen.bangsan.boothwaiting.domain.Account;
 import kr.hs.sen.bangsan.boothwaiting.dto.AccountCheckResponse;
 import kr.hs.sen.bangsan.boothwaiting.repository.AccountRepository;
@@ -21,6 +22,10 @@ public class AccountService {
     private WaitingRepository waitingRepository;
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    private WaitingUpdateService waitingUpdateService;
+    @Autowired
+    private MonitorController monitorController;
     @Autowired
     private Scheduler scheduler;
 
@@ -46,7 +51,7 @@ public class AccountService {
             }
 
             //TODO: 퇴장타이머 만들기
-
+            monitorController.broadcastCurrentAccounts();
             return "입장되셨습니다.";
         } if (accountRepository.existsByStudentId(studentId) && accountRepository.findByStudentId(studentId).getStatus() == Account.AccountStatus.CANCELED) {
             return "부재로 인해 만료된 입장권입니다.";
@@ -54,5 +59,18 @@ public class AccountService {
             return "아직 호출되지 않은 순번입니다.";
         }
         return "알수없는 입장권입니다.";
+    }
+    @Transactional
+    public String exit(int studentId) {
+        if (accountRepository.existsByStudentId(studentId)) {
+            Account account = accountRepository.findByStudentId(studentId);
+            if(account.getStatus() == Account.AccountStatus.ENTERED || account.getStatus() == Account.AccountStatus.TEMPORARILY_EXIT) {
+                account.exit();
+                //TODO: 퇴장타이머 취소
+                waitingUpdateService.updateWaiting();
+                return "퇴장되었습니다.";
+            }
+        }
+        return "잘못된 학번입니다.";
     }
 }

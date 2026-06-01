@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>부스 모니터</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <style>
+        /* ── 기본 리셋 & 변수 ─────────────────────── */
+        :root {
+            --bg:        #080c14;
+            --surface:   #0f1623;
+            --surface2:  #161f30;
+            --border:    #1c2a3f;
+            --accent:    #38bdf8;
+            --entered:   #34d399;
+            --temp:      #fbbf24;
+            --waiting:   #a78bfa;
+            --text:      #e2e8f0;
+            --muted:     #4b6585;
+            --divider:   #1e2d45;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Noto Sans KR', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* 미세 격자 배경 */
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0;
+            background-image:
+                    linear-gradient(var(--divider) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--divider) 1px, transparent 1px);
+            background-size: 36px 36px;
+            opacity: .25;
+            pointer-events: none;
+        }
+
+        /* ── 레이아웃 ─────────────────────────────── */
+        .page { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 36px 20px 60px; }
+
+        /* ── 헤더 ────────────────────────────────── */
+        header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 40px;
+        }
+        .logo { font-family: 'Space Mono', monospace; }
+        .logo h1 { font-size: 1.35rem; color: var(--accent); letter-spacing: .04em; }
+        .logo p  { font-size: .72rem; color: var(--muted); margin-top: 3px; }
+
+        .badge {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 999px; padding: 7px 16px;
+            font-family: 'Space Mono', monospace; font-size: .72rem;
+            color: var(--muted); transition: all .3s;
+        }
+        .badge.live { border-color: var(--entered); color: var(--entered); }
+        .badge-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+        .badge.live .badge-dot { background: var(--entered); animation: blink 2s infinite; }
+
+        @keyframes blink {
+            0%,100% { opacity:1; transform:scale(1); }
+            50%      { opacity:.4; transform:scale(1.4); }
+        }
+
+        /* ── 섹션 공통 ───────────────────────────── */
+        .section { margin-bottom: 32px; }
+
+        .section-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-family: 'Space Mono', monospace; font-size: .72rem;
+            text-transform: uppercase; letter-spacing: .12em; color: var(--muted);
+        }
+        .section-title span { /* 인원 수 뱃지 */
+            display: inline-flex; align-items: center; justify-content: center;
+            margin-left: 10px; min-width: 22px; height: 22px;
+            border-radius: 999px; font-size: .68rem; font-weight: 700;
+            padding: 0 6px;
+        }
+        .entered-badge { background: rgba(52,211,153,.15); color: var(--entered); }
+        .waiting-badge { background: rgba(167,139,250,.15); color: var(--waiting); }
+
+        .timestamp { font-family: 'Space Mono', monospace; font-size: .68rem; color: var(--muted); }
+
+        /* ── 테이블 ──────────────────────────────── */
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; overflow: hidden;
+            transition: border-color .4s, box-shadow .4s;
+        }
+        .card.flash {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+
+        thead tr { background: var(--surface2); border-bottom: 1px solid var(--border); }
+        th {
+            padding: 12px 18px; text-align: left;
+            font-family: 'Space Mono', monospace; font-size: .66rem;
+            text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 400;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background .15s;
+            animation: rowIn .25s ease both;
+        }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: var(--surface2); }
+
+        @keyframes rowIn {
+            from { opacity:0; transform:translateX(-6px); }
+            to   { opacity:1; transform:translateX(0); }
+        }
+
+        td { padding: 15px 18px; font-size: .88rem; }
+
+        .col-rank { font-family: 'Space Mono', monospace; font-size: .7rem; color: var(--muted); }
+        .col-id   { font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: .06em; }
+        .col-id.entered-id { color: var(--accent); }
+        .col-id.waiting-id { color: var(--waiting); }
+        .col-name { font-weight: 500; }
+        .col-phone { font-family: 'Space Mono', monospace; font-size: .82rem; color: var(--muted); }
+
+        /* 상태 뱃지 */
+        .status {
+            display: inline-flex; align-items: center; gap: 5px;
+            border-radius: 999px; padding: 3px 11px;
+            font-family: 'Space Mono', monospace; font-size: .68rem; font-weight: 700;
+        }
+        .status.entered {
+            background: rgba(52,211,153,.12); color: var(--entered);
+            border: 1px solid rgba(52,211,153,.28);
+        }
+        .status.temp {
+            background: rgba(251,191,36,.12); color: var(--temp);
+            border: 1px solid rgba(251,191,36,.28);
+        }
+        .status.called {
+            background: rgba(56,189,248,.12); color: var(--accent);
+            border: 1px solid rgba(56,189,248,.28);
+        }
+        .status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+        .status.entered .status-dot { animation: blink 2s infinite; }
+
+        /* ── 빈 상태 ──────────────────────────────── */
+        .empty { padding: 52px 20px; text-align: center; }
+        .empty-icon { font-size: 2rem; opacity: .2; margin-bottom: 12px; }
+        .empty p { font-family: 'Space Mono', monospace; font-size: .8rem; color: var(--muted); }
+
+        /* ── 구분선 ──────────────────────────────── */
+        .divider {
+            border: none; border-top: 1px dashed var(--divider);
+            margin: 36px 0;
+        }
+
+        /* ── 서버 주소 설정 UI ───────────────────── */
+        .config-bar {
+            display: flex; gap: 8px; align-items: center;
+            margin-bottom: 28px;
+        }
+        .config-bar input {
+            flex: 1; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; padding: 9px 14px;
+            font-family: 'Space Mono', monospace; font-size: .8rem; color: var(--text);
+            outline: none; transition: border-color .2s;
+        }
+        .config-bar input:focus { border-color: var(--accent); }
+        .config-bar button {
+            background: var(--accent); color: #000; border: none;
+            border-radius: 8px; padding: 9px 18px;
+            font-family: 'Space Mono', monospace; font-size: .8rem; font-weight: 700;
+            cursor: pointer; transition: opacity .2s;
+            white-space: nowrap;
+        }
+        .config-bar button:hover { opacity: .85; }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- 헤더 -->
+    <header>
+        <div class="logo">
+            <h1>BOOTH MONITOR</h1>
+            <p>// 실시간 부스 현황판</p>
+        </div>
+        <div class="badge" id="badge">
+            <div class="badge-dot"></div>
+            <span id="badgeText">연결 중...</span>
+        </div>
+    </header>
+
+    <!-- 서버 주소 설정 -->
+    <div class="config-bar">
+        <input id="serverInput" type="text" placeholder="서버 주소 (예: http://192.168.0.10:8080)" />
+        <button onclick="connect()">연결</button>
+    </div>
+
+    <!-- 입장자 섹션 -->
+    <section class="section">
+        <div class="section-head">
+            <div class="section-title">
+                입장자
+                <span class="entered-badge" id="accountCount">0</span>
+            </div>
+            <span class="timestamp" id="updatedAt">—</span>
+        </div>
+        <div class="card" id="accountCard">
+            <table>
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>학번</th>
+                    <th>이름</th>
+                    <th>상태</th>
+                </tr>
+                </thead>
+                <tbody id="accountBody">
+                <tr><td colspan="4"><div class="empty"><div class="empty-icon">◌</div><p>연결 대기 중...</p></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- 대기자 섹션 -->
+    <section class="section">
+        <div class="section-head">
+            <div class="section-title">
+                대기자
+                <span class="waiting-badge" id="waitingCount">0</span>
+            </div>
+        </div>
+        <div class="card" id="waitingCard">
+            <table>
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>학번</th>
+                    <th>이름</th>
+                    <th>전화번호</th>
+                </tr>
+                </thead>
+                <tbody id="waitingBody">
+                <tr><td colspan="4"><div class="empty"><div class="empty-icon">◌</div><p>연결 대기 중...</p></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<script>
+    // ── 설정 ────────────────────────────────────────
+    const STORAGE_KEY = 'boothMonitorServer';
+    let stompClient = null;
+
+    const serverInput = document.getElementById('serverInput');
+    serverInput.value = localStorage.getItem(STORAGE_KEY) || 'http://localhost:8080';
+
+    // ── 연결 ────────────────────────────────────────
+    function connect() {
+        const base = serverInput.value.trim().replace(/\/$/, '');
+        localStorage.setItem(STORAGE_KEY, base);
+
+        if (stompClient && stompClient.connected) {
+            stompClient.disconnect();
+        }
+
+        setBadge(false, '연결 중...');
+
+        // 초기 데이터 REST로 먼저 가져오기
+        fetch(`${base}/api/monitor`)
+            .then(r => r.json())
+            .then(render)
+            .catch(() => {});
+
+        // WebSocket 연결
+        const socket = new SockJS(`${base}/ws`);
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        stompClient.connect({}, () => {
+            setBadge(true, 'LIVE');
+            stompClient.subscribe('/topic/monitor', msg => {
+                render(JSON.parse(msg.body));
+            });
+        }, () => {
+            setBadge(false, '연결 끊김');
+        });
+    }
+
+    // ── 렌더링 ──────────────────────────────────────
+    function render(data) {
+        const { accounts = [], waitings = [] } = data;
+
+        // 시각
+        const now = new Date();
+        document.getElementById('updatedAt').textContent =
+            `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} 업데이트`;
+
+        // 인원 수
+        document.getElementById('accountCount').textContent = accounts.length;
+        document.getElementById('waitingCount').textContent = waitings.length;
+
+        // 입장자 테이블
+        const ab = document.getElementById('accountBody');
+        if (accounts.length === 0) {
+            ab.innerHTML = emptyRow(4, '현재 입장 중인 인원이 없습니다.');
+        } else {
+            ab.innerHTML = accounts.map((a, i) => {
+                const statusClass = a.status === 'ENTERED' ? 'entered' : a.status === 'CALLED' ? 'called' : 'temp';
+                const statusLabel = a.status === 'ENTERED' ? 'ENTERED' : a.status === 'CALLED' ? 'CALLED' : 'TEMP EXIT';
+                return `<tr>
+          <td class="col-rank">${pad2(i + 1)}</td>
+          <td class="col-id entered-id">${a.studentId}</td>
+          <td class="col-name">${a.name}</td>
+          <td>
+            <span class="status ${statusClass}">
+              <span class="status-dot"></span>
+              ${statusLabel}
+            </span>
+          </td>
+        </tr>`;
+            }).join('');
+        }
+        flash('accountCard');
+
+        // 대기자 테이블
+        const wb = document.getElementById('waitingBody');
+        if (waitings.length === 0) {
+            wb.innerHTML = emptyRow(4, '대기 중인 인원이 없습니다.');
+        } else {
+            wb.innerHTML = waitings.map((w, i) => `<tr>
+        <td class="col-rank">${pad2(i + 1)}</td>
+        <td class="col-id waiting-id">${w.studentId}</td>
+        <td class="col-name">${w.name}</td>
+        <td class="col-phone">${w.phoneNumber}</td>
+      </tr>`).join('');
+        }
+        flash('waitingCard');
+    }
+
+    // ── 유틸 ────────────────────────────────────────
+    function setBadge(live, text) {
+        const b = document.getElementById('badge');
+        b.className = 'badge' + (live ? ' live' : '');
+        document.getElementById('badgeText').textContent = text;
+    }
+
+    function flash(id) {
+        const el = document.getElementById(id);
+        el.classList.remove('flash');
+        void el.offsetWidth;
+        el.classList.add('flash');
+        setTimeout(() => el.classList.remove('flash'), 500);
+    }
+
+    function emptyRow(cols, msg) {
+        return `<tr><td colspan="${cols}"><div class="empty"><div class="empty-icon">◌</div><p>${msg}</p></div></td></tr>`;
+    }
+
+    function pad(n)  { return String(n).padStart(2, '0'); }
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    // ── 자동 연결 ───────────────────────────────────
+    connect();
+</script>
+</body>
+</html>
