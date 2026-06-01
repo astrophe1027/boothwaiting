@@ -7,90 +7,66 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
-        /* 기본 배경 및 레이아웃 */
         body {
             display: flex;
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            padding: 0; /* 모바일 외곽 여백 최소화 */
+            padding: 0;
             background-color: #f8fafc;
         }
-
         main {
             width: 100%;
             max-width: 500px;
-            margin-top: 0; /* 화면 상단 바짝 붙임 */
+            margin-top: 0;
         }
-
-        /* 카드(Article) 내부 여백 최적화 */
         article {
             margin: 0 !important;
-            padding: 1rem !important; /* 내부 패딩 축소 */
+            padding: 1rem !important;
         }
-
-        /* 헤더(제목) 영역 */
         header {
             margin-bottom: 0.5rem !important;
             padding: 0 0 0.5rem 0 !important;
             border-bottom: 1px solid var(--pico-muted-border-color);
         }
-
         header h2, header h3 {
             margin: 0 !important;
             margin-top: 0.8rem !important;
         }
-
-        /* 대기 정보 섹션 (번호와 팀수 사이 간격) */
         .grid {
             margin-top: 0.25rem !important;
-            gap: 0.5rem !important; /* 두 칸 사이 간격 좁힘 */
+            gap: 0.5rem !important;
         }
-
         .grid div {
             padding: 0.25rem 0;
         }
-
         .grid h2 {
-            font-size: 1.7rem !important; /* 숫자 크기 살짝 조정 */
+            font-size: 1.7rem !important;
             margin: 0 !important;
             line-height: 1.2;
         }
-
-        /* 버튼 그룹 상단 간격 */
         .button-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0.5rem;
-            margin-top: 0.75rem !important; /* 정보와 버튼 사이 간격 축소 */
+            margin-top: 0.75rem !important;
         }
-
         .btn-refresh { background-color: var(--pico-primary) !important; border: none; }
         .btn-cancel { background-color: #e53e3e !important; border: none; }
-
-        /* 버튼 크기 조정 */
         button {
             font-size: 14px !important;
             padding: 0.5rem 0.25rem !important;
             margin-bottom: 0 !important;
         }
-
-        /* 구분선 및 안내 사항 */
-        hr {
-            margin: 0.75rem 0 !important;
-        }
-
+        hr { margin: 0.75rem 0 !important; }
         .extra-info p {
             margin-bottom: 0.25rem !important;
             line-height: 1.4;
         }
-
         small {
             font-size: 0.75rem !important;
             display: inline-block;
         }
-
-        /* 링크 박스 여백 */
         div[style*="background: var(--pico-card-background-color)"] {
             margin-top: 0.5rem !important;
             padding: 0.5rem !important;
@@ -133,70 +109,67 @@
                         🔄 순번 새로고침
                     </button>
 
-                    <button id = "cancel"
-                            class="btn-cancel">
+                    <button id="cancel" class="btn-cancel">
                         ❌ 대기 취소
                     </button>
                 </div>
 
-                <hr> <div class="extra-info">
-                <p style="margin-bottom: 0.5rem;">
-                    <strong>📌 안내 사항</strong><br>
-                    입장 순서가 되면 카카오톡 알림을 드립니다. <br>
+                <hr>
+                <div class="extra-info">
+                    <p style="margin-bottom: 0.5rem;">
+                        <strong>📌 안내 사항</strong><br>
+                        입장 순서가 되면 카카오톡 알림을 드립니다.<br>
                         알림 후 5분 내 미방문 시 대기가 자동 취소될 수 있습니다.
-                </p>
-                <p style="margin-bottom: 0.5rem;" th:if="${id} == -1">
-                    이미 호출 되신 경우엔 등록되지 않은 학번이라 뜰 수 있습니다.
-                </p>
-            </div>
-                <hr> <div class="extra-info"  th:if="${id} != -1">
-                <p style="margin-bottom: 0.5rem;">
-                    아래 링크를 복사하시면 페이지를 닫아도 재접속 하실 수 있습니다.
-                </p>
-                <div style="background: var(--pico-card-background-color);">
-                    <a href="javascript:void(0);"
-                       id="shareUrl"
-                       onclick="copyToClipboard()"
-                       style="display: block; cursor: pointer; text-decoration: underline; word-break: break-all; font-size: 1.2rem; font-weight: bold; color: var(--pico-primary);">
-                        [[${url}]]
-                    </a>
+                    </p>
+                    <p style="margin-bottom: 0.5rem;" th:if="${id} == -1">
+                        이미 호출 되신 경우엔 등록되지 않은 학번이라 뜰 수 있습니다.
+                    </p>
                 </div>
-                <script th:inline="javascript">
-                    function copyToClipboard() {
-                        const url = document.getElementById('shareUrl').innerText;
-                        navigator.clipboard.writeText(url).then(() => {
-                            alert("링크가 복사되었습니다.");
-                        });
-                    }
-                </script>
-            </div>
+
+                <hr>
+                <div class="extra-info" th:if="${id} != -1">
+                    <p style="margin-bottom: 0.5rem;">
+                        아래 링크를 복사하시면 페이지를 닫아도 재접속 하실 수 있습니다.
+                    </p>
+                    <div style="background: var(--pico-card-background-color);">
+                        <a href="javascript:void(0);"
+                           id="shareUrl"
+                           onclick="copyToClipboard()"
+                           style="display: block; cursor: pointer; text-decoration: underline; word-break: break-all; font-size: 1.2rem; font-weight: bold; color: var(--pico-primary);">
+                            [[${url}]]
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </article>
 </main>
+
 <script>
+    const BASE_URL = '[[${baseUrl}]]';
+
+    function copyToClipboard() {
+        const url = document.getElementById('shareUrl').innerText;
+        navigator.clipboard.writeText(url).then(() => {
+            alert("링크가 복사되었습니다.");
+        });
+    }
+
     document.getElementById('cancel').addEventListener('click', async function(e) {
-
-        const result = confirm('정말 취소하시겠습니까?')
-
+        const result = confirm('정말 취소하시겠습니까?');
         if (result) {
-            e.preventDefault()
+            e.preventDefault();
             try {
-                const response = await fetch('/api/waiting?token='+new URLSearchParams(window.location.search).get("token"), {
+                const response = await fetch('/api/waiting?token=' + new URLSearchParams(window.location.search).get("token"), {
                     method: 'DELETE'
                 });
-
                 if (response.ok) {
                     const data = await response.json();
                     alert(data.message);
-                    location.replace("http://localhost:8080/register")
+                    location.replace(BASE_URL + '/register');
                 }
             } catch (error) {
-                if (error.response) {
-                    alert(error.response.data);
-                } else {
-                    alert('네트워크 오류가 발생했습니다.');
-                }
+                alert('네트워크 오류가 발생했습니다.');
             }
         }
     });
