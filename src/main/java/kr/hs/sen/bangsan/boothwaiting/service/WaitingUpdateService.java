@@ -98,8 +98,7 @@ public class WaitingUpdateService {
             }
 
             // TODO: 호출된 사람한테 메세지 발송
-            System.out.println(account.getStudentId() + " " + phoneNumber + " 호출되셨습니다.");
-
+            System.out.println(account.getStudentId() + " " + phoneNumber + " 호출되셨습니다. ("+callTimeoutMinutes+"분뒤 취소됨)");
             // 앞에 approachNotifyCount명 남은 사람에게 이동 안내
             if (waitingRepository.findAll().size() >= approachNotifyCount + 1) {
                 List<Waiting> waiters = waitingRepository.findAll(Sort.by("id"));

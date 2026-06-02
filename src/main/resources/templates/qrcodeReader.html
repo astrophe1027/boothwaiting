@@ -15,13 +15,53 @@
             background-color: #f4f6f9;
             margin: 0;
             padding: 20px;
-            height: 100vh;
+            min-height: 100vh;
             box-sizing: border-box;
         }
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
+        h1 { color: #333; margin-bottom: 20px; }
+
+        /* 서버 주소 설정 바 */
+        .config-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            width: 100%;
+            max-width: 500px;
         }
+        .config-bar input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .config-bar button {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .config-bar button:hover { opacity: 0.85; }
+        .server-saved {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #666;
+        }
+        .server-saved a {
+            cursor: pointer;
+            font-size: 12px;
+            color: #888;
+            text-decoration: underline;
+        }
+
         #interactive {
             position: relative;
             width: 100%;
@@ -32,13 +72,11 @@
             overflow: hidden;
             background: #000;
         }
-        /* html5-qrcode가 내부적으로 생성하는 video 요소를 구역에 맞춤 */
         #interactive video {
             width: 100% !important;
             height: 100% !important;
             object-fit: cover;
         }
-        /* QR코드 조준 가이드선 */
         .scan-laser {
             position: absolute;
             top: 50%;
@@ -51,10 +89,8 @@
             z-index: 10;
             animation: blink 1s infinite;
         }
-        @keyframes blink {
-            50% { opacity: 0.4; }
-        }
-        /* 서버 결과 메시지 팝업 */
+        @keyframes blink { 50% { opacity: 0.4; } }
+
         #result-toast {
             position: fixed;
             top: 50%;
@@ -72,12 +108,21 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .success { color: #4CAF50; }
-        .error { color: #F44336; }
+        .error   { color: #F44336; }
     </style>
 </head>
 <body>
 
-<h1>🎟️ 입장 패스 스캐너 (QR)</h1>
+<h1>🎟️ 입장 패스 스캐너</h1>
+
+<div class="config-bar" id="configBar">
+    <input id="serverInput" type="text" placeholder="서버 주소 (예: http://192.168.0.10:8080)" />
+    <button onclick="saveServer()">저장</button>
+</div>
+<div class="server-saved" id="serverSaved" style="display:none;">
+    <span id="serverSavedText"></span>
+    <a onclick="editServer()">변경</a>
+</div>
 
 <div id="interactive">
     <div class="scan-laser"></div>
@@ -86,29 +131,61 @@
 <div id="result-toast"></div>
 
 <script>
+    const STORAGE_KEY = 'boothMonitorServer'; // monitor.html과 같은 키 공유
+
+    const serverInput    = document.getElementById('serverInput');
+    const configBar      = document.getElementById('configBar');
+    const serverSaved    = document.getElementById('serverSaved');
+    const serverSavedText = document.getElementById('serverSavedText');
+
+    (function init() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) showSaved(saved);
+        serverInput.value = saved || '';
+    })();
+
+    function saveServer() {
+        const val = serverInput.value.trim().replace(/\/$/, '');
+        if (!val) return;
+        localStorage.setItem(STORAGE_KEY, val);
+        showSaved(val);
+    }
+
+    function showSaved(url) {
+        serverSavedText.textContent = '서버: ' + url;
+        configBar.style.display = 'none';
+        serverSaved.style.display = 'flex';
+    }
+
+    function editServer() {
+        serverInput.value = localStorage.getItem(STORAGE_KEY) || '';
+        serverSaved.style.display = 'none';
+        configBar.style.display = 'flex';
+        serverInput.focus();
+    }
+
+    function getBaseUrl() {
+        return (localStorage.getItem(STORAGE_KEY) || 'http://localhost:8080').replace(/\/$/, '');
+    }
+
     let isProcessing = false;
     let html5QrCode;
 
-    // 1. QR 스캐너 초기화 및 시작 함수
     function startScanner() {
-        // 'interactive' 디브 안에 QR 스캐너 생성
         html5QrCode = new Html5Qrcode("interactive");
 
         const config = {
-            fps: 10, // 초당 프레임 수 (10번 스캔)
+            fps: 30,
             qrbox: function(viewfinderWidth, viewfinderHeight) {
-                // 화면 크기에 맞게 가로세로 정사각형 조준 영역 유동적 설정
                 const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                const qrboxSize = Math.floor(minEdge * 0.8);
-                return { width: qrboxSize, height: qrboxSize };
+                return { width: Math.floor(minEdge * 0.9), height: Math.floor(minEdge * 0.9) };
             },
-            // 성능 최적화: 속도 향상을 위해 오직 QR코드 포맷만 읽도록 강제 지정
+            aspectRatio:1.0,
             formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
         };
 
-        // 후면 카메라(environment)를 우선으로 스캐너 시작
         html5QrCode.start(
-            { facingMode: "environment" },
+            { facingMode: "environment"},
             config,
             onScanSuccess
         ).catch(err => {
@@ -117,63 +194,41 @@
         });
     }
 
-    // 2. QR코드가 성공적으로 감지되었을 때의 이벤트 처리
-    function onScanSuccess(decodedText, decodedResult) {
-        // 이미 서버와 통신 중이면 중복 요청 방지
+    function onScanSuccess(decodedText) {
         if (isProcessing) return;
         isProcessing = true;
-
-        console.log("인식된 QR 데이터: " + decodedText);
-
-        // 비프음 재생
         playBeep();
-
-        // 서버로 데이터 전송 (QR 안에 담긴 텍스트를 토큰으로 보냄)
         sendToServer(decodedText);
     }
 
-    // 3. 서버 통신 함수
     function sendToServer(qrData) {
-        const serverUrl = `http://localhost:8080/api/entry?token=${encodeURIComponent(qrData)}`;
+        const url = `${getBaseUrl()}/api/entry?token=${encodeURIComponent(qrData)}`;
 
-        fetch(serverUrl, {
+        fetch(url, {
             method: "POST",
             headers: { "Content-Type": "text/plain" },
         })
             .then(res => {
-                if (!res.ok) {
-                    throw new Error(`서버 오류 (${res.status})`);
-                }
+                if (!res.ok) throw new Error(`서버 오류 (${res.status})`);
                 return res.json();
             })
-            .then(data => {
-                // 오직 서버에서 응답으로 내려준 메시지만 화면에 표시
-                showToast(data.message, "success");
-            })
+            .then(data => showToast(data.message, "success"))
             .catch(err => {
                 console.error("통신 에러:", err);
                 showToast("서버 연결에 실패했습니다.", "error");
             })
             .finally(() => {
-                // 요청 처리가 끝나고 1초 뒤 다음 QR코드를 인식할 수 있도록 잠금 해제
-                setTimeout(() => {
-                    isProcessing = false;
-                }, 1000);
+                setTimeout(() => { isProcessing = false; }, 1000);
             });
     }
 
-    // 4. 메시지를 잠시 띄웠다 사라지게 하는 함수
     function showToast(message, type) {
         const toast = document.getElementById("result-toast");
         toast.innerHTML = `<span class="${type}">${message}</span>`;
         toast.style.display = "block";
-
-        setTimeout(() => {
-            toast.style.display = "none";
-        }, 2500);
+        setTimeout(() => { toast.style.display = "none"; }, 2500);
     }
 
-    // 오디오 효과음 (바코드 스캔 느낌)
     function playBeep() {
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -184,11 +239,10 @@
             oscillator.start();
             oscillator.stop(audioCtx.currentTime + 0.1);
         } catch (e) {
-            console.warn("오디오 플레이 실패 (브라우저 상호작용 필요):", e);
+            console.warn("오디오 플레이 실패:", e);
         }
     }
 
-    // 페이지 로드 시 스캐너 즉시 시작
     window.addEventListener("DOMContentLoaded", startScanner);
 </script>
 </body>

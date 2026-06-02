@@ -5,6 +5,7 @@ import kr.hs.sen.bangsan.boothwaiting.service.WaitingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -18,7 +19,9 @@ public class ExitController {
     private WaitingService waitingService;
 
     @DeleteMapping(path="/api/entry")
-    public ResponseEntity<Map<String, String>>  exit() {
-        return ResponseEntity.ok(new HashMap<String, String>());
+    public ResponseEntity<Map<String, String>>  exit(@RequestParam(name="studentId", defaultValue = "0") int studentId) {
+        Map <String, String>  response = new HashMap<>();
+        response.put("message", accountService.exit(studentId));
+        return ResponseEntity.ok(response);
     }
 }

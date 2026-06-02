@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>퇴장 처리</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem 1rem;
+        }
+        main {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 5vh;
+        }
+        input, button { font-size: 16px !important; }
+
+        .config-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+        }
+        .config-bar input { flex: 1; margin: 0; }
+        .config-bar button {
+            width: auto; margin: 0;
+            padding: 0.5rem 1rem !important;
+            white-space: nowrap;
+        }
+        .server-saved {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--pico-muted-color);
+        }
+        .server-saved a {
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: var(--pico-muted-color);
+            text-decoration: underline;
+        }
+
+        #result-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 20px 40px;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            display: none;
+            z-index: 100;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .success { color: #4CAF50; }
+        .error   { color: #F44336; }
+    </style>
+</head>
+<body>
+
+<main class="container">
+    <article>
+        <header>
+            <h2 style="margin-bottom: 0;">🚪 퇴장 처리</h2>
+        </header>
+
+        <!-- 서버 주소 입력 (저장 전) -->
+        <div class="config-bar" id="configBar">
+            <input id="serverInput" type="text" placeholder="서버 주소 (예: http://192.168.0.10:8080)" />
+            <button class="secondary" onclick="saveServer()">저장</button>
+        </div>
+
+        <!-- 서버 주소 저장 후 표시 -->
+        <div class="server-saved" id="serverSaved" style="display:none;">
+            <span id="serverSavedText"></span>
+            <a onclick="editServer()">변경</a>
+        </div>
+
+        <label for="studentId">학번 (5자리)
+            <input type="text"
+                   id="studentId"
+                   placeholder="12345"
+                   pattern="\d{5}"
+                   maxlength="5"
+                   inputmode="numeric"
+                   title="학번 5자리를 입력해주세요"
+                   autofocus />
+        </label>
+
+        <button id="exitBtn" onclick="handleExit()">퇴장 처리</button>
+    </article>
+</main>
+
+<div id="result-toast"></div>
+
+<script>
+    const STORAGE_KEY = 'boothMonitorServer';
+
+    const serverInput  = document.getElementById('serverInput');
+    const configBar    = document.getElementById('configBar');
+    const serverSaved  = document.getElementById('serverSaved');
+    const serverSavedText = document.getElementById('serverSavedText');
+
+    // 초기화: 저장된 주소 있으면 바로 숨김
+    (function init() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            showSaved(saved);
+        }
+        serverInput.value = saved || '';
+    })();
+
+    function saveServer() {
+        const val = serverInput.value.trim().replace(/\/$/, '');
+        if (!val) return;
+        localStorage.setItem(STORAGE_KEY, val);
+        showSaved(val);
+    }
+
+    function showSaved(url) {
+        serverSavedText.textContent = '서버: ' + url;
+        configBar.style.display = 'none';
+        serverSaved.style.display = 'flex';
+        document.getElementById('studentId').focus();
+    }
+
+    function editServer() {
+        serverInput.value = localStorage.getItem(STORAGE_KEY) || '';
+        serverSaved.style.display = 'none';
+        configBar.style.display = 'flex';
+        serverInput.focus();
+    }
+
+    function getBaseUrl() {
+        return (localStorage.getItem(STORAGE_KEY) || 'http://localhost:8080').replace(/\/$/, '');
+    }
+
+    document.getElementById('studentId').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') handleExit();
+    });
+
+    async function handleExit() {
+        const studentIdInput = document.getElementById('studentId');
+        const studentId = studentIdInput.value.trim();
+
+        if (!/^\d{5}$/.test(studentId)) {
+            showToast('학번은 5자리 숫자여야 합니다.', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('exitBtn');
+        btn.setAttribute('aria-busy', 'true');
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`${getBaseUrl()}/api/entry?studentId=${encodeURIComponent(studentId)}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            showToast(data.message, res.ok ? 'success' : 'error');
+            if (res.ok) studentIdInput.value = '';
+        } catch (err) {
+            showToast('서버 연결에 실패했습니다.', 'error');
+        } finally {
+            btn.removeAttribute('aria-busy');
+            btn.disabled = false;
+            studentIdInput.focus();
+        }
+    }
+
+    function showToast(message, type) {
+        const toast = document.getElementById('result-toast');
+        toast.innerHTML = `<span class="${type}">${message}</span>`;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+</script>
+</body>
+</html>
