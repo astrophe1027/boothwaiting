@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>대기열 확인</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
         body {
             display: flex;
@@ -82,7 +81,7 @@
         </header>
 
         <div id="response-message">
-            <div th:fragment="register-response">
+            <div>
                 <ins th:if="${id} != -1">[[${message}]]</ins>
                 <mark th:if="${id} == -1">[[${message}]]</mark>
 
@@ -91,21 +90,16 @@
                         대기 번호
                         <h2 style="color: var(--pico-primary);">[[${id}]]</h2>
                     </div>
-                    <div id="refresh-response" th:fragment="refresh-response">
+                    <div id="refresh-response">
                         내 앞 대기
-                        <h2 th:if="${number} > 1">[[${number}]]팀</h2>
+                        <h2 th:if="${number} > 1">[[${number}]]명</h2>
                         <h3 th:if="${number} == 0 or ${number} == 1">곧 입장 순서입니다!<br>부스 앞으로 와주세요.</h3>
-                        <h3 th:if="${number} == -1">현재 대기 팀이 없습니다.</h3>
+                        <h3 th:if="${number} == -1">현재 대기 인원이 없습니다.</h3>
                     </div>
                 </div>
 
                 <div th:if="${id} != -1" class="button-group" style="margin-top: 0; gap: 0.75rem;">
-                    <button class="btn-refresh"
-                            hx-trigger="every 5s, click"
-                            hx-get="/api/waiting"
-                            hx-vals='js:{token: new URLSearchParams(window.location.search).get("token")}'
-                            hx-target="#refresh-response"
-                            hx-swap="outerHTML">
+                    <button class="btn-refresh">
                         🔄 순번 새로고침
                     </button>
 
@@ -173,6 +167,37 @@
             }
         }
     });
+</script>
+<script>
+    function updateWaitingDisplay(number) {
+        const el = document.getElementById('refresh-response');
+        let content = '내 앞 대기\n';
+        if (number > 1) {
+            content += `<h2>${number}명</h2>`;
+        } else if (number === 0 || number === 1) {
+            content += `<h3>곧 입장 순서입니다!<br>부스 앞으로 와주세요.</h3>`;
+        } else {
+            content += `<h3>현재 대기 인원이 없습니다.</h3>`;
+        }
+        el.innerHTML = content;
+    }
+
+    async function fetchWaiting() {
+        const token = new URLSearchParams(window.location.search).get('token');
+        try {
+            const res = await fetch(`/api/waiting?token=${encodeURIComponent(token)}`);
+            if (res.ok) {
+                const data = await res.json();
+                updateWaitingDisplay(data.number);
+            }
+        } catch (e) {}
+    }
+
+    // 5초마다 자동 갱신
+    setInterval(fetchWaiting, 5000);
+
+    // 버튼 클릭
+    document.querySelector('.btn-refresh').addEventListener('click', fetchWaiting);
 </script>
 </body>
 </html>
