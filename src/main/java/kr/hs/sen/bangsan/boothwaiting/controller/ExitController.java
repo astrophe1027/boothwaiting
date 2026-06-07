@@ -19,7 +19,7 @@ public class ExitController {
     private WaitingService waitingService;
 
     @DeleteMapping(path="/api/entry")
-    public ResponseEntity<Map<String, String>>  exit(@RequestParam(name="studentId", defaultValue = "0") int studentId) {
+    public synchronized ResponseEntity<Map<String, String>>  exit(@RequestParam(name="studentId", defaultValue = "0") int studentId) {
         Map <String, String>  response = new HashMap<>();
         response.put("message", accountService.exit(studentId));
         return ResponseEntity.ok(response);

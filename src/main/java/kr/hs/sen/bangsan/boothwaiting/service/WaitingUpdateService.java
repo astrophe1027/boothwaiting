@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
@@ -40,7 +41,7 @@ public class WaitingUpdateService {
     final WaitingUpdateService waitingUpdateService = this;
 
     @Transactional
-    public void updateWaiting() {
+    public synchronized void updateWaiting() {
         int currentNumber = accountRepository.findAllByStatus(Account.AccountStatus.ENTERED).size()
                 + accountRepository.findAllByStatus(Account.AccountStatus.CALLED).size()
                 + accountRepository.findAllByStatus(Account.AccountStatus.TEMPORARILY_EXIT).size();

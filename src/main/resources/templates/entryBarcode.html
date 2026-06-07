@@ -88,8 +88,8 @@
         <div>
             <div class="qrcode-container">
                 <mark th:if="${id} == -1">잘못된 페이지입니다.</mark>
-                <div id="qrcode"></div><br>
-                <strong  th:if="${id} != -1">입장시 필요한 바코드입니다.</strong>
+                <div id="qrcode" th:if="${id} != -1"></div><br>
+                <strong th:if="${id} != -1">입장시 필요한 바코드입니다.</strong>
             </div>
 
             <footer th:if="${id} != -1">

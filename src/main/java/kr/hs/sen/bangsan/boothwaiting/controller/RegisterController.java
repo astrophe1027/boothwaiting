@@ -22,17 +22,8 @@ public class RegisterController {
     private AccountService accountService;
 
     @PostMapping(path = "/api/waiting")
-    public /*ResponseEntity<WaitingRegisterResponse>*/String waitingRegister(@RequestBody @Valid WaitingRegisterRequest waitingRegisterRequest, Model model) {
+    public synchronized String waitingRegister(@RequestBody @Valid WaitingRegisterRequest waitingRegisterRequest, Model model) {
         WaitingRegisterResponse response = waitingService.registerWaiting(waitingRegisterRequest);
-        /*
-        if(response.getId() == -1){
-            return ResponseEntity.badRequest().body(response);
-        } else {
-            return ResponseEntity.ok().body(response);
-        }
-        */
-
-        //return "<div class='pico-color-green'>" + response.getMessage() + "</div>";
 
         if (response.getId() == -1) {
             throw new IllegalArgumentException(response.getMessage());
@@ -44,19 +35,19 @@ public class RegisterController {
         }
 
         return "redirect:/check?token=" + waitingService.getToken(studentId);
-       //return "waitingCheck";
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public ResponseEntity<String> handleException(IllegalArgumentException e) {
-        System.out.print(e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(e.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public ResponseEntity<String> handleException(MethodArgumentNotValidException e) {
         String errorMessage = e.getBindingResult().getFieldError() != null

@@ -22,7 +22,7 @@ public class CancelController {
     AccountService accountService;
 
     @DeleteMapping(path = "/api/waiting")
-    public ResponseEntity<Map<String, String>> waitingRefresh(@RequestParam(value = "token", defaultValue = "") String token) {
+    public synchronized ResponseEntity<Map<String, String>> waitingRefresh(@RequestParam(value = "token", defaultValue = "") String token) {
         Map<String, String> response = new HashMap<>();
         response.put("message", waitingService.cancelWaiting(waitingService.getStudentIdByToken(token)));
         return ResponseEntity.ok(response);

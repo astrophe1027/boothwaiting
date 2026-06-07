@@ -90,17 +90,18 @@
 
 <script>
     document.getElementById('waitingForm').addEventListener('submit', async function(e) {
-
         e.preventDefault();
+
+        const btn = this.querySelector('button[type="submit"]');
+        btn.setAttribute('aria-busy', 'true');
+        btn.disabled = true;
 
         const data = Object.fromEntries(new FormData(this));
 
         try {
             const response = await fetch('/api/waiting', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
 
@@ -108,13 +109,13 @@
                 alert(await response.text());
             } else if (response.redirected) {
                 window.location.href = response.url;
+                return; // 리다이렉트 후엔 버튼 복구 불필요
             }
         } catch (error) {
-            if (error.response) {
-                alert(error.response.data);
-            } else {
-                alert('네트워크 오류가 발생했습니다.');
-            }
+            alert(error.response ? error.response.data : '네트워크 오류가 발생했습니다.');
+        } finally {
+            btn.removeAttribute('aria-busy');
+            btn.disabled = false;
         }
     });
 </script>

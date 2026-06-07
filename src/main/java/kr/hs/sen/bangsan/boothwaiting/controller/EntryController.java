@@ -19,7 +19,7 @@ public class EntryController {
     private WaitingService waitingService;
 
     @PostMapping(path="/api/entry")
-    public ResponseEntity<Map<String, String>> enter(@RequestParam(value = "token", defaultValue = "") String token) {
+    public synchronized ResponseEntity<Map<String, String>> enter(@RequestParam(value = "token", defaultValue = "") String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Access-Control-Allow-Origin", "*");
         Map<String, String> response = new HashMap<>();
