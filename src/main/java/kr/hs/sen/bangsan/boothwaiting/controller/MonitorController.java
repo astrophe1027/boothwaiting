@@ -5,11 +5,14 @@ import kr.hs.sen.bangsan.boothwaiting.domain.Waiting;
 import kr.hs.sen.bangsan.boothwaiting.repository.AccountRepository;
 import kr.hs.sen.bangsan.boothwaiting.repository.WaitingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
@@ -17,8 +20,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RestController
-@CrossOrigin(origins = "*") // 로컬 파일(file://)에서 접근 허용
+@CrossOrigin(origins = "*")
 public class MonitorController {
+
+    @Value("${booth.client-password}")
+    private String clientPassword;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -29,24 +35,25 @@ public class MonitorController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    /**
-     * 클라이언트 최초 연결 시 현재 상태 스냅샷
-     * GET /api/monitor
-     */
     @GetMapping("/api/monitor")
-    public ResponseEntity<Map<String, Object>> getMonitorData() {
+    public ResponseEntity<?> getMonitorData(
+            @RequestHeader(value = "X-Client-Password", required = false) String requestPassword) {
+
+        if (clientPassword != null && !clientPassword.isEmpty()) {
+            if (requestPassword == null || !clientPassword.equals(requestPassword)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Collections.singletonMap("message", "인증에 실패했습니다. 비밀번호를 확인하세요."));
+            }
+        }
+
         return ResponseEntity.ok(buildMonitorData());
     }
 
-    /**
-     * 상태 변경 시 WebSocket으로 전체 브로드캐스트
-     */
     public void broadcastCurrentAccounts() {
         messagingTemplate.convertAndSend("/topic/monitor", Optional.of(buildMonitorData()));
     }
 
     private Map<String, Object> buildMonitorData() {
-        // 입장자 (ENTERED + TEMPORARILY_EXIT), id 순 정렬
         List<Map<String, Object>> accounts = Stream.concat(Stream.concat(
                         accountRepository.findAllByStatus(Account.AccountStatus.ENTERED).stream(),
                         accountRepository.findAllByStatus(Account.AccountStatus.TEMPORARILY_EXIT).stream()
@@ -61,7 +68,6 @@ public class MonitorController {
                 })
                 .collect(Collectors.toList());
 
-        // 대기자, id(등록 순) 정렬
         List<Map<String, Object>> waitings = waitingRepository
                 .findAll(Sort.by("id"))
                 .stream()
