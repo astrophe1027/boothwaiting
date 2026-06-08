@@ -20,13 +20,17 @@
         }
         h1 { color: #333; margin-bottom: 20px; }
 
-        /* 서버 주소 설정 바 */
+        /* 설정 레이아웃 세로 정렬 구조 */
+        .config-wrapper {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 16px;
+        }
         .config-bar {
             display: flex;
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
             width: 100%;
-            max-width: 500px;
         }
         .config-bar input {
             flex: 1;
@@ -47,20 +51,6 @@
             white-space: nowrap;
         }
         .config-bar button:hover { opacity: 0.85; }
-        .server-saved {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
-            font-size: 13px;
-            color: #666;
-        }
-        .server-saved a {
-            cursor: pointer;
-            font-size: 12px;
-            color: #888;
-            text-decoration: underline;
-        }
 
         #interactive {
             position: relative;
@@ -115,13 +105,14 @@
 
 <h1>🎟️ 입장 패스 스캐너</h1>
 
-<div class="config-bar" id="configBar">
-    <input id="serverInput" type="text" placeholder="서버 주소 (예: http://192.168.0.10:8080)" />
-    <button onclick="saveServer()">저장</button>
-</div>
-<div class="server-saved" id="serverSaved" style="display:none;">
-    <span id="serverSavedText"></span>
-    <a onclick="editServer()">변경</a>
+<div class="config-wrapper" id="configArea">
+    <div class="config-bar">
+        <input id="serverInput" type="text" placeholder="서버 주소 (예: http://192.168.0.10:8080)" />
+    </div>
+    <div class="config-bar">
+        <input id="passwordInput" type="password" placeholder="비밀번호 입력" />
+        <button onclick="saveServer()">저장</button>
+    </div>
 </div>
 
 <div id="interactive">
@@ -131,41 +122,42 @@
 <div id="result-toast"></div>
 
 <script>
-    const STORAGE_KEY = 'boothMonitorServer'; // monitor.html과 같은 키 공유
+    const STORAGE_SERVER_KEY = 'boothMonitorServer';
+    const STORAGE_PASS_KEY = 'boothMonitorPassword';
 
     const serverInput    = document.getElementById('serverInput');
-    const configBar      = document.getElementById('configBar');
-    const serverSaved    = document.getElementById('serverSaved');
-    const serverSavedText = document.getElementById('serverSavedText');
+    const passwordInput  = document.getElementById('passwordInput');
+    const configArea     = document.getElementById('configArea');
 
+    // 초기화: 첫 진입 시 로컬스토리지 값이 있다면 미리 입력창에 채워둠
     (function init() {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) showSaved(saved);
-        serverInput.value = saved || '';
+        serverInput.value = localStorage.getItem(STORAGE_SERVER_KEY) || '';
+        passwordInput.value = localStorage.getItem(STORAGE_PASS_KEY) || '';
     })();
 
     function saveServer() {
-        const val = serverInput.value.trim().replace(/\/$/, '');
-        if (!val) return;
-        localStorage.setItem(STORAGE_KEY, val);
-        showSaved(val);
-    }
+        const urlVal = serverInput.value.trim().replace(/\/$/, '');
+        const passVal = passwordInput.value;
 
-    function showSaved(url) {
-        serverSavedText.textContent = '서버: ' + url;
-        configBar.style.display = 'none';
-        serverSaved.style.display = 'flex';
-    }
+        if (!urlVal) {
+            showToast('서버 주소를 입력해주세요.', 'error');
+            return;
+        }
 
-    function editServer() {
-        serverInput.value = localStorage.getItem(STORAGE_KEY) || '';
-        serverSaved.style.display = 'none';
-        configBar.style.display = 'flex';
-        serverInput.focus();
+        // 로컬스토리지에 주소와 비밀번호 모두 영구 저장
+        localStorage.setItem(STORAGE_SERVER_KEY, urlVal);
+        localStorage.setItem(STORAGE_PASS_KEY, passVal);
+
+        // 이전 안내 텍스트 영역 없이 깔끔하게 통째로 숨김
+        configArea.style.display = 'none';
     }
 
     function getBaseUrl() {
-        return (localStorage.getItem(STORAGE_KEY) || 'http://localhost:8080').replace(/\/$/, '');
+        return (localStorage.getItem(STORAGE_SERVER_KEY) || 'http://localhost:8080').replace(/\/$/, '');
+    }
+
+    function getPassword() {
+        return localStorage.getItem(STORAGE_PASS_KEY) || '';
     }
 
     let isProcessing = false;
@@ -180,7 +172,7 @@
                 const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
                 return { width: Math.floor(minEdge * 0.9), height: Math.floor(minEdge * 0.9) };
             },
-            aspectRatio:1.0,
+            aspectRatio: 1.0,
             formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
         };
 
@@ -204,9 +196,18 @@
     function sendToServer(qrData) {
         const url = `${getBaseUrl()}/api/entry?token=${encodeURIComponent(qrData)}`;
 
+        // 요청 헤더 설정 및 X-Client-Password 주입
+        const headers = {
+            "Content-Type": "text/plain"
+        };
+        const currentPassword = getPassword();
+        if (currentPassword) {
+            headers['X-Client-Password'] = currentPassword;
+        }
+
         fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "text/plain" },
+            headers: headers,
         })
             .then(res => {
                 if (!res.ok) throw new Error(`서버 오류 (${res.status})`);
