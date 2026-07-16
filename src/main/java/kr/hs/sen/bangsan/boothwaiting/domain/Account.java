@@ -39,12 +39,11 @@ public class Account {
     @Column(nullable = false)
     private AccountStatus status;
 
-    public Account(Integer studentID, String name, String token) {
+    public Account(Integer studentID, String name) {
         this.studentId = studentID;
         this.name = name;
         this.coin = 0;
         this.status = AccountStatus.CALLED;
-        this.token = token;
     }
 
     public void completeEntry() {
@@ -62,10 +61,9 @@ public class Account {
         this.time = LocalDateTime.now();
     }
 
-    public void recall(String token) {
+    public void recall() {
         this.status = AccountStatus.CALLED;
         this.time = LocalDateTime.now();
-        this.token = token;
     }
 
     public void temporarilyExit() {
