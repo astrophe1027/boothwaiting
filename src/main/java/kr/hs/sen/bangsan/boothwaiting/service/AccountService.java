@@ -33,16 +33,21 @@ public class AccountService {
     @Value("${booth.exit-timeout-minutes}")
     private int exitTimeoutMinutes;
 
-    public boolean isCalled(int studentId) {
-        return accountRepository.existsByStudentId(studentId)
-                && accountRepository.findByStudentId(studentId).getStatus() == Account.AccountStatus.CALLED;
+    public boolean isWaiting(int studentId) {
+        return waitingRepository.existsByStudentId(studentId);
     }
 
     @Transactional
     public String enter(int studentId) {
-        if (this.isCalled(studentId)) {
-            Account account = accountRepository.findByStudentId(studentId);
-            account.completeEntry();
+        if (this.isWaiting(studentId)) {
+            Account account;
+            if (accountRepository.existsByStudentId(studentId)) {
+                account = accountRepository.findByStudentId(studentId);
+                account.recall();
+            } else {
+                account = new Account(studentId, waitingRepository.findByStudentId(studentId).getName());
+                accountRepository.save(account);
+            }
 
             // 호출 취소 타이머 제거
             cancelScheduledJob(Objects.toString(studentId), "cancel-group");
