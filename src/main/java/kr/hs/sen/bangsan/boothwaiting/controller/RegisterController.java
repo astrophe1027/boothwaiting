@@ -13,6 +13,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Controller
 public class RegisterController {
 
@@ -22,7 +24,7 @@ public class RegisterController {
     private AccountService accountService;
 
     @PostMapping(path = "/api/waiting")
-    public synchronized String waitingRegister(@RequestBody @Valid WaitingRegisterRequest waitingRegisterRequest, Model model) {
+    public synchronized ResponseEntity<Map<String, String>> waitingRegister(@RequestBody @Valid WaitingRegisterRequest waitingRegisterRequest, Model model) {
         WaitingRegisterResponse response = waitingService.registerWaiting(waitingRegisterRequest);
 
         if (response.getId() == -1) {
@@ -30,11 +32,10 @@ public class RegisterController {
         }
 
         int studentId = Integer.parseInt(waitingRegisterRequest.getStudentId());
-        if(accountService.isCalled(studentId)) {
-            return "redirect:/pass?token=" + waitingService.getToken(studentId);
+        if(accountService.isWaiting(studentId)) {
+            return ResponseEntity.ok().build();
         }
-
-        return "redirect:/check?token=" + waitingService.getToken(studentId);
+        return ResponseEntity.ok().build();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
