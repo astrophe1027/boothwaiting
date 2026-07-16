@@ -23,8 +23,12 @@ public class CancelController {
 
     @DeleteMapping(path = "/api/waiting")
     public synchronized ResponseEntity<Map<String, String>> waitingRefresh(@RequestParam(value = "token", defaultValue = "") String token) {
+        /*
         Map<String, String> response = new HashMap<>();
         response.put("message", waitingService.cancelWaiting(waitingService.getStudentIdByToken(token)));
         return ResponseEntity.ok(response);
+         */
+        return ResponseEntity.badRequest().build();
+        //TODO: 관리자가 관리하는 새로운 취소 시스템 제작
     }
 }
