@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -31,6 +30,10 @@ public class EntryController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers)
                     .body(Map.of("message", "인증되지 않은 요청입니다."));
         }
-        return new ResponseEntity<>(Map.of("message", accountService.enter(waitingService.getStudentIdByToken(token))), headers, HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(Map.of("message", accountService.enter(waitingService.getStudentIdByToken(token))), headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Map.of("message", e.getMessage()), headers, HttpStatus.BAD_REQUEST);
+        }
     }
 }

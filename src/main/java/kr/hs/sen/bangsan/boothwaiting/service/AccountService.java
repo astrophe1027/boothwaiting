@@ -49,22 +49,13 @@ public class AccountService {
                 accountRepository.save(account);
             }
 
-            // 호출 취소 타이머 제거
-            cancelScheduledJob(Objects.toString(studentId), "cancel-group");
-
             // 퇴장 타이머 등록
             scheduleExitJob(studentId);
 
             monitorController.broadcastCurrentAccounts();
-            return "입장되셨습니다.";
+            return "입장되었습니다.";
         }
-        if (accountRepository.existsByStudentId(studentId)
-                && accountRepository.findByStudentId(studentId).getStatus() == Account.AccountStatus.CANCELED) {
-            return "부재로 인해 만료된 입장권입니다.";
-        } else if (waitingRepository.existsByStudentId(studentId)) {
-            return "아직 호출되지 않은 순번입니다.";
-        }
-        return "알수없는 입장권입니다.";
+        throw new IllegalArgumentException("잘못된 요청입니다.");
     }
 
     @Transactional
